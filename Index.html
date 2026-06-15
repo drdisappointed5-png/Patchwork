@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patchwork — fix your code</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-2: #1c2128;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --accent: #7ee787;
+    --accent-dim: #2d4a2f;
+    --error: #ff7b72;
+    --error-dim: #4a2424;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 24px 32px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .logo {
+    font-weight: 700;
+    font-size: 1.4rem;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .logo .mono {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    font-size: 1.2rem;
+  }
+
+  header .tag {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  main {
+    flex: 1;
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .lede {
+    color: var(--text-dim);
+    font-size: 1rem;
+    max-width: 60ch;
+    line-height: 1.6;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 800px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .field { display: flex; flex-direction: column; gap: 8px; }
+
+  label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+  }
+
+  select, textarea, button {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.92rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+  }
+
+  select {
+    padding: 10px 12px;
+    cursor: pointer;
+    width: fit-content;
+  }
+
+  textarea {
+    padding: 14px;
+    resize: vertical;
+    min-height: 220px;
+    line-height: 1.5;
+    tab-size: 2;
+  }
+
+  textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  textarea::placeholder { color: #4d5560; }
+
+  .error-input { min-height: 110px; }
+
+  .field.full { grid-column: 1 / -1; }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  button.run {
+    background: var(--accent);
+    color: #04220a;
+    border: none;
+    font-weight: 600;
+    padding: 13px 28px;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+    font-size: 0.95rem;
+  }
+
+  button.run:hover:not(:disabled) {
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+
+  button.run:active:not(:disabled) { transform: scale(0.98); }
+
+  button.run:disabled {
+    background: var(--panel-2);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    border: 1px solid var(--border);
+  }
+
+  .status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+    animation: pulse 1.2s infinite ease-in-out;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  .result {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: none;
+  }
+
+  .result.visible { display: block; }
+
+  .result-header {
+    background: var(--panel-2);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    text-transform: none;
+    letter-spacing: normal;
+    border-radius: 4px;
+  }
+
+  .copy-btn:hover { color: var(--text); border-color: var(--text-dim); }
+
+  pre.code-out {
+    background: var(--panel);
+    padding: 16px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    white-space: pre;
+  }
+
+  .explanation {
+    padding: 16px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    line-height: 1.65;
+    font-size: 0.92rem;
+    color: var(--text);
+  }
+
+  .explanation p { margin-bottom: 10px; }
+  .explanation p:last-child { margin-bottom: 0; }
+  .explanation code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--panel-2);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--accent);
+  }
+
+  .error-box {
+    border: 1px solid var(--error-dim);
+    background: rgba(255, 123, 114, 0.06);
+    border-radius: 8px;
+    padding: 14px 16px;
+    color: var(--error);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    display: none;
+  }
+
+  .error-box.visible { display: block; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 18px 32px;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="mono">&gt;_</span> Patchwork</div>
+  <div class="tag">paste code + error → get a fix</div>
+</header>
+
+<main>
+  <p class="lede">
+    Paste a broken snippet and the error or traceback it produces.
+    Patchwork sends both to Claude, returns a corrected version of your
+    code, and explains what changed and why.
+  </p>
+
+  <div class="grid">
+    <div class="field">
+      <label for="lang">Language</label>
+      <select id="lang">
+        <option value="Python">Python</option>
+        <option value="JavaScript">JavaScript</option>
+        <option value="TypeScript">TypeScript</option>
+        <option value="Java">Java</option>
+        <option value="C++">C++</option>
+        <option value="C">C</option>
+        <option value="Go">Go</option>
+        <option value="Rust">Rust</option>
+        <option value="Ruby">Ruby</option>
+        <option value="PHP">PHP</option>
+        <option value="SQL">SQL</option>
+        <option value="Other / not sure">Other / not sure</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="field">
+      <label for="code">Your code</label>
+      <textarea id="code" placeholder="Paste the code that's failing..." spellcheck="false"></textarea>
+    </div>
+    <div class="field">
+      <label for="error">Error / traceback</label>
+      <textarea id="error" class="error-input" placeholder="Paste the error message or traceback..." spellcheck="false"></textarea>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="run" id="runBtn">Fix my code</button>
+    <div class="status" id="status" style="display:none;">
+      <span class="dot"></span><span id="statusText">Thinking...</span>
+    </div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="result" id="result">
+    <div class="result-header">
+      <span>Fixed code</span>
+      <button class="copy-btn" id="copyBtn">Copy</button>
+    </div>
+    <pre class="code-out" id="codeOut"></pre>
+    <div class="explanation" id="explanation"></div>
+  </div>
+</main>
+
+<footer>Powered by Claude — fixes are suggestions, review before running in production.</footer>
+
+<script>
+  const runBtn = document.getElementById('runBtn');
+  const status = document.getElementById('status');
+  const statusText = document.getElementById('statusText');
+  const result = document.getElementById('result');
+  const codeOut = document.getElementById('codeOut');
+  const explanation = document.getElementById('explanation');
+  const errorBox = document.getElementById('errorBox');
+  const copyBtn = document.getElementById('copyBtn');
+
+  function escapeHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function simpleMarkdownToHtml(md) {
+    const escaped = escapeHtml(md);
+    const withInlineCode = escaped.replace(/`([^`]+)`/g, '<code>$1</code>');
+    return withInlineCode
+      .split(/\n\s*\n/)
+      .map(p => '<p>' + p.trim().replace(/\n/g, '<br>') + '</p>')
+      .join('');
+  }
+
+  copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(codeOut.textContent).then(() => {
+      copyBtn.textContent = 'Copied';
+      setTimeout(() => copyBtn.textContent = 'Copy', 1500);
+    });
+  });
+
+  runBtn.addEventListener('click', async () => {
+    const lang = document.getElementById('lang').value;
+    const code = document.getElementById('code').value.trim();
+    const error = document.getElementById('error').value.trim();
+
+    errorBox.classList.remove('visible');
+    result.classList.remove('visible');
+
+    if (!code) {
+      errorBox.textContent = 'Paste some code first.';
+      errorBox.classList.add('visible');
+      return;
+    }
+
+    runBtn.disabled = true;
+    status.style.display = 'flex';
+    statusText.textContent = 'Analyzing and fixing...';
+
+    try {
+      const response = await fetch("/api/fix", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lang, code, error })
+      });
+
+      const parsed = await response.json();
+
+      if (!response.ok) {
+        throw new Error(parsed.error || `Server returned status ${response.status}`);
+      }
+
+      codeOut.textContent = parsed.fixedCode || '(no code returned)';
+      explanation.innerHTML = simpleMarkdownToHtml(parsed.explanation || '');
+      result.classList.add('visible');
+
+    } catch (err) {
+      errorBox.textContent = 'Something went wrong: ' + err.message + '. Try again, or simplify the input.';
+      errorBox.classList.add('visible');
+    } finally {
+      runBtn.disabled = false;
+      status.style.display = 'none';
+    }
+  });
+</script>
+
+</body>
+</html>
