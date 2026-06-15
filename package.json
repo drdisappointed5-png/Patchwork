@@ -1,0 +1,9 @@
+{
+  "name": "patchwork",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Paste broken code and an error message, get a fix from Claude.",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
