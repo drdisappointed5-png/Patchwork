@@ -1,421 +1,533 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Patchwork — fix your code</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Patchwork — fix your code</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,700;1,700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg: #0d1117;
-    --panel: #161b22;
-    --panel-2: #1c2128;
-    --border: #30363d;
-    --text: #e6edf3;
-    --text-dim: #8b949e;
-    --accent: #7ee787;
-    --accent-dim: #2d4a2f;
-    --error: #ff7b72;
-    --error-dim: #4a2424;
-  }
+    :root {
+      --cream:    #FDFAF6;
+      --white:    #FFFFFF;
+      --blush:    #FFE8E0;
+      --sky:      #E0EEFF;
+      --mint:     #DFF4ED;
+      --coral:    #FF6B4A;
+      --navy:     #1A2033;
+      --slate:    #5A6278;
+      --border:   #EDE9E3;
+      --mono-bg:  #F5F3EF;
+    }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Space Grotesk', sans-serif;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--navy);
+      line-height: 1.6;
+    }
 
-  header {
-    border-bottom: 1px solid var(--border);
-    padding: 24px 32px;
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(253,250,246,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 5%;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 62px;
+    }
+    .nav-logo {
+      font-family: 'Fraunces', serif;
+      font-size: 1.35rem;
+      color: var(--navy);
+      text-decoration: none;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .nav-logo span { color: var(--coral); }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--slate);
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--coral); }
+    .nav-cta {
+      background: var(--coral);
+      color: white;
+      border: none;
+      padding: 0.55rem 1.2rem;
+      border-radius: 999px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .nav-cta:hover { opacity: 0.88; transform: translateY(-1px); }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; }
+    .hamburger span { display: block; width: 22px; height: 2px; background: var(--navy); border-radius: 2px; }
 
-  .logo {
-    font-weight: 700;
-    font-size: 1.4rem;
-    letter-spacing: -0.02em;
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-  }
+    /* ── HERO ── */
+    #home {
+      min-height: 88vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 5rem 5% 4rem;
+      position: relative; overflow: hidden;
+    }
+    .hero-blob {
+      position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.55; pointer-events: none;
+    }
+    .blob-1 { width: 420px; height: 420px; background: #FFD6CC; top: -80px; left: -100px; }
+    .blob-2 { width: 340px; height: 340px; background: #C8DEFF; bottom: 0; right: -80px; }
+    .blob-3 { width: 260px; height: 260px; background: #C8F0E2; top: 40%; left: 60%; }
 
-  .logo .mono {
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--accent);
-    font-size: 1.2rem;
-  }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--blush);
+      color: var(--coral);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      letter-spacing: 0.04em;
+      margin-bottom: 1.5rem;
+      position: relative; z-index: 1;
+    }
+    .hero-badge::before { content: '✦'; font-size: 0.7rem; }
 
-  header .tag {
-    color: var(--text-dim);
-    font-size: 0.9rem;
-    font-family: 'JetBrains Mono', monospace;
-  }
+    h1 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(2.6rem, 6vw, 4.2rem);
+      line-height: 1.1;
+      max-width: 720px;
+      margin-bottom: 1.2rem;
+      position: relative; z-index: 1;
+    }
+    h1 em {
+      font-style: italic;
+      color: var(--coral);
+    }
 
-  main {
-    flex: 1;
-    max-width: 1100px;
-    width: 100%;
-    margin: 0 auto;
-    padding: 32px 24px 64px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-  }
+    .hero-sub {
+      font-size: 1.1rem;
+      color: var(--slate);
+      max-width: 520px;
+      margin-bottom: 2.5rem;
+      position: relative; z-index: 1;
+    }
 
-  .lede {
-    color: var(--text-dim);
-    font-size: 1rem;
-    max-width: 60ch;
-    line-height: 1.6;
-  }
+    .hero-actions {
+      display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+      position: relative; z-index: 1;
+      margin-bottom: 3.5rem;
+    }
+    .btn-primary {
+      background: var(--coral); color: white;
+      padding: 0.75rem 1.8rem; border-radius: 999px;
+      font-weight: 600; font-size: 0.95rem;
+      text-decoration: none; border: none; cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-2px); }
+    .btn-ghost {
+      background: transparent; color: var(--navy);
+      padding: 0.75rem 1.8rem; border-radius: 999px;
+      font-weight: 500; font-size: 0.95rem;
+      text-decoration: none; border: 1.5px solid var(--border);
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .btn-ghost:hover { border-color: var(--coral); transform: translateY(-2px); }
 
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
+    /* ── CODE WINDOW ── */
+    .code-window {
+      position: relative; z-index: 1;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 12px 48px rgba(26,32,51,0.08);
+      max-width: 640px; width: 100%;
+      overflow: hidden;
+      text-align: left;
+    }
+    .code-bar {
+      background: var(--mono-bg);
+      padding: 0.75rem 1.1rem;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .dot { width: 11px; height: 11px; border-radius: 50%; }
+    .dot-r { background: #FF6058; }
+    .dot-y { background: #FFBD2E; }
+    .dot-g { background: #28CA41; }
+    .code-label {
+      margin-left: auto;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--slate);
+    }
+    .code-body { padding: 1.25rem 1.4rem; }
+    pre {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      line-height: 1.7;
+      color: var(--navy);
+      white-space: pre-wrap;
+    }
+    .line-err { color: #D94040; text-decoration: underline wavy #D94040; }
+    .line-fix { color: #1A8C5C; }
+    .line-comment { color: var(--slate); }
+    .patch-tag {
+      display: inline-block;
+      background: var(--mint);
+      color: #1A8C5C;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.55rem;
+      border-radius: 6px;
+      margin-top: 0.5rem;
+    }
 
-  @media (max-width: 800px) {
-    .grid { grid-template-columns: 1fr; }
-  }
+    /* ── SECTIONS SHARED ── */
+    section { padding: 5rem 5%; }
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--coral);
+      margin-bottom: 0.6rem;
+    }
+    h2 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+      line-height: 1.15;
+      margin-bottom: 1rem;
+    }
+    .section-sub {
+      color: var(--slate);
+      font-size: 1rem;
+      max-width: 540px;
+    }
 
-  .field { display: flex; flex-direction: column; gap: 8px; }
+    /* ── FEATURES ── */
+    #features { background: var(--white); }
+    .features-header { max-width: 1100px; margin: 0 auto 3rem; }
+    .features-grid {
+      max-width: 1100px; margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 1.5rem;
+    }
+    .feature-card {
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.8rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(26,32,51,0.07); }
+    .feature-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+    }
+    .icon-blush { background: var(--blush); }
+    .icon-sky   { background: var(--sky); }
+    .icon-mint  { background: var(--mint); }
+    .icon-lav   { background: #EDE0FF; }
+    .feature-card h3 {
+      font-size: 1rem; font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+    .feature-card p { font-size: 0.88rem; color: var(--slate); line-height: 1.55; }
 
-  label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-dim);
-  }
+    /* ── ABOUT ── */
+    #about {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+    .about-visual {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 8px 32px rgba(26,32,51,0.06);
+    }
+    .about-stat-row {
+      display: flex; gap: 1rem; margin-bottom: 1rem;
+    }
+    .stat-pill {
+      flex: 1;
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .stat-pill strong {
+      display: block;
+      font-family: 'Fraunces', serif;
+      font-size: 1.7rem;
+      color: var(--coral);
+    }
+    .stat-pill span { font-size: 0.78rem; color: var(--slate); }
+    .about-tagline {
+      background: var(--blush);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      font-size: 0.88rem;
+      color: var(--coral);
+      font-weight: 500;
+      text-align: center;
+    }
+    .about-text p {
+      color: var(--slate);
+      font-size: 0.97rem;
+      margin-bottom: 1rem;
+      line-height: 1.7;
+    }
 
-  select, textarea, button {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.92rem;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: var(--panel);
-    color: var(--text);
-  }
+    /* ── CONTACT ── */
+    #contact { background: var(--white); }
+    .contact-inner {
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .contact-inner h2 { margin-bottom: 0.5rem; }
+    .contact-inner .section-sub { margin: 0 auto 2rem; }
+    .contact-form { display: flex; flex-direction: column; gap: 1rem; text-align: left; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    label { font-size: 0.82rem; font-weight: 600; color: var(--navy); }
+    input, textarea {
+      padding: 0.7rem 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      background: var(--cream);
+      color: var(--navy);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus { border-color: var(--coral); }
+    textarea { resize: vertical; min-height: 120px; }
+    .form-submit {
+      background: var(--coral); color: white;
+      padding: 0.8rem;
+      border: none; border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem; font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .form-submit:hover { opacity: 0.88; transform: translateY(-1px); }
 
-  select {
-    padding: 10px 12px;
-    cursor: pointer;
-    width: fit-content;
-  }
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 5%;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    .footer-logo {
+      font-family: 'Fraunces', serif;
+      font-size: 1.1rem;
+      color: var(--navy);
+    }
+    .footer-logo span { color: var(--coral); }
+    footer p { font-size: 0.8rem; color: var(--slate); }
 
-  textarea {
-    padding: 14px;
-    resize: vertical;
-    min-height: 220px;
-    line-height: 1.5;
-    tab-size: 2;
-  }
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      #about { grid-template-columns: 1fr; gap: 2rem; padding: 3rem 5%; }
+      .form-row { grid-template-columns: 1fr; }
+      .about-visual { order: -1; }
+    }
 
-  textarea:focus, select:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
-
-  textarea::placeholder { color: #4d5560; }
-
-  .error-input { min-height: 110px; }
-
-  .field.full { grid-column: 1 / -1; }
-
-  .actions {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-
-  button.run {
-    background: var(--accent);
-    color: #04220a;
-    border: none;
-    font-weight: 600;
-    padding: 13px 28px;
-    cursor: pointer;
-    transition: transform 0.1s ease, box-shadow 0.15s ease;
-    font-size: 0.95rem;
-  }
-
-  button.run:hover:not(:disabled) {
-    box-shadow: 0 0 0 3px var(--accent-dim);
-  }
-
-  button.run:active:not(:disabled) { transform: scale(0.98); }
-
-  button.run:disabled {
-    background: var(--panel-2);
-    color: var(--text-dim);
-    cursor: not-allowed;
-    border: 1px solid var(--border);
-  }
-
-  .status {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    color: var(--text-dim);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--accent);
-    display: inline-block;
-    animation: pulse 1.2s infinite ease-in-out;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 1; }
-  }
-
-  .result {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-    display: none;
-  }
-
-  .result.visible { display: block; }
-
-  .result-header {
-    background: var(--panel-2);
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-dim);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .copy-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    padding: 4px 10px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    text-transform: none;
-    letter-spacing: normal;
-    border-radius: 4px;
-  }
-
-  .copy-btn:hover { color: var(--text); border-color: var(--text-dim); }
-
-  pre.code-out {
-    background: var(--panel);
-    padding: 16px;
-    overflow-x: auto;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    line-height: 1.6;
-    white-space: pre;
-  }
-
-  .explanation {
-    padding: 16px;
-    background: var(--panel);
-    border-top: 1px solid var(--border);
-    line-height: 1.65;
-    font-size: 0.92rem;
-    color: var(--text);
-  }
-
-  .explanation p { margin-bottom: 10px; }
-  .explanation p:last-child { margin-bottom: 0; }
-  .explanation code {
-    font-family: 'JetBrains Mono', monospace;
-    background: var(--panel-2);
-    padding: 1px 5px;
-    border-radius: 4px;
-    font-size: 0.85em;
-    color: var(--accent);
-  }
-
-  .error-box {
-    border: 1px solid var(--error-dim);
-    background: rgba(255, 123, 114, 0.06);
-    border-radius: 8px;
-    padding: 14px 16px;
-    color: var(--error);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    display: none;
-  }
-
-  .error-box.visible { display: block; }
-
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 18px 32px;
-    color: var(--text-dim);
-    font-size: 0.8rem;
-    font-family: 'JetBrains Mono', monospace;
-    text-align: center;
-  }
-</style>
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+  </style>
 </head>
 <body>
 
-<header>
-  <div class="logo"><span class="mono">&gt;_</span> Patchwork</div>
-  <div class="tag">paste code + error → get a fix</div>
-</header>
+<!-- NAV -->
+<nav>
+  <a href="#home" class="nav-logo">Patch<span>work</span></a>
+  <ul class="nav-links">
+    <li><a href="#home">Home</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="#contact" class="nav-cta">Get started</a>
+  <div class="hamburger" onclick="this.classList.toggle('open')">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
 
-<main>
-  <p class="lede">
-    Paste a broken snippet and the error or traceback it produces.
-    Patchwork sends both to Claude, returns a corrected version of your
-    code, and explains what changed and why.
-  </p>
+<!-- HERO -->
+<section id="home">
+  <div class="hero-blob blob-1"></div>
+  <div class="hero-blob blob-2"></div>
+  <div class="hero-blob blob-3"></div>
 
-  <div class="grid">
-    <div class="field">
-      <label for="lang">Language</label>
-      <select id="lang">
-        <option value="Python">Python</option>
-        <option value="JavaScript">JavaScript</option>
-        <option value="TypeScript">TypeScript</option>
-        <option value="Java">Java</option>
-        <option value="C++">C++</option>
-        <option value="C">C</option>
-        <option value="Go">Go</option>
-        <option value="Rust">Rust</option>
-        <option value="Ruby">Ruby</option>
-        <option value="PHP">PHP</option>
-        <option value="SQL">SQL</option>
-        <option value="Other / not sure">Other / not sure</option>
-      </select>
-    </div>
+  <div class="hero-badge">AI-powered code repair</div>
+
+  <h1>Your code, <em>stitched</em><br>back together</h1>
+  <p class="hero-sub">Patchwork finds bugs, explains what went wrong, and gives you a clean fix — in seconds.</p>
+
+  <div class="hero-actions">
+    <a href="#contact" class="btn-primary">Try Patchwork free</a>
+    <a href="#features" class="btn-ghost">See how it works</a>
   </div>
 
-  <div class="grid">
-    <div class="field">
-      <label for="code">Your code</label>
-      <textarea id="code" placeholder="Paste the code that's failing..." spellcheck="false"></textarea>
+  <div class="code-window">
+    <div class="code-bar">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
+      <span class="code-label">app.py — patchwork</span>
     </div>
-    <div class="field">
-      <label for="error">Error / traceback</label>
-      <textarea id="error" class="error-input" placeholder="Paste the error message or traceback..." spellcheck="false"></textarea>
+    <div class="code-body">
+      <pre><span class="line-comment"># Before</span>
+<span class="line-err">def greet(name)
+    print("Hello, " + name)</span>
+
+<span class="line-comment"># After — Patchwork fixed it</span>
+<span class="line-fix">def greet(name):
+    print(f"Hello, {name}")</span>
+
+<span class="patch-tag">✓ 2 issues patched</span></pre>
     </div>
   </div>
+</section>
 
-  <div class="actions">
-    <button class="run" id="runBtn">Fix my code</button>
-    <div class="status" id="status" style="display:none;">
-      <span class="dot"></span><span id="statusText">Thinking...</span>
+<!-- FEATURES -->
+<section id="features">
+  <div class="features-header">
+    <div class="section-label">Features</div>
+    <h2>Everything you need<br>to ship clean code</h2>
+    <p class="section-sub">Patchwork handles the tedious stuff so you can stay in flow.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon icon-blush">🔍</div>
+      <h3>Instant bug detection</h3>
+      <p>Paste your code and Patchwork pinpoints the exact lines causing errors — no stack trace decoding required.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon icon-mint">🩹</div>
+      <h3>One-click fixes</h3>
+      <p>Get a corrected version of your code ready to copy. No vague suggestions, just working solutions.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon icon-sky">💬</div>
+      <h3>Plain-English explanations</h3>
+      <p>Understand <em>why</em> something broke, not just how to fix it. Great for learning as you go.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon icon-lav">⚡</div>
+      <h3>Multi-language support</h3>
+      <p>Python, JavaScript, TypeScript, Go, Rust — Patchwork speaks your language.</p>
     </div>
   </div>
+</section>
 
-  <div class="error-box" id="errorBox"></div>
-
-  <div class="result" id="result">
-    <div class="result-header">
-      <span>Fixed code</span>
-      <button class="copy-btn" id="copyBtn">Copy</button>
+<!-- ABOUT -->
+<div style="padding: 5rem 5%;">
+  <section id="about">
+    <div class="about-visual">
+      <div class="about-stat-row">
+        <div class="stat-pill">
+          <strong>98%</strong>
+          <span>fix accuracy</span>
+        </div>
+        <div class="stat-pill">
+          <strong>&lt;3s</strong>
+          <span>average fix time</span>
+        </div>
+      </div>
+      <div class="about-stat-row">
+        <div class="stat-pill">
+          <strong>12+</strong>
+          <span>languages</span>
+        </div>
+        <div class="stat-pill">
+          <strong>∞</strong>
+          <span>patience for bugs</span>
+        </div>
+      </div>
+      <div class="about-tagline">
+        Built for developers who'd rather build than debug.
+      </div>
     </div>
-    <pre class="code-out" id="codeOut"></pre>
-    <div class="explanation" id="explanation"></div>
+    <div class="about-text">
+      <div class="section-label">About</div>
+      <h2>We believe debugging shouldn't slow you down</h2>
+      <p>Patchwork was born out of frustration with the debugging loop — googling error messages, reading docs, and guessing. There had to be a better way.</p>
+      <p>We built an AI that actually understands your code in context, finds the root cause, and patches it — the same way a senior engineer would, but in seconds.</p>
+      <p>Whether you're a solo developer shipping fast or a team keeping production clean, Patchwork fits right into your workflow.</p>
+      <a href="#contact" class="btn-primary" style="display:inline-block; margin-top:0.5rem;">Start fixing for free</a>
+    </div>
+  </section>
+</div>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-inner">
+    <div class="section-label">Contact</div>
+    <h2>Get in touch</h2>
+    <p class="section-sub">Have a question, want to partner, or just want to say hi? We'd love to hear from you.</p>
+    <div class="contact-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fname">First name</label>
+          <input type="text" id="fname" placeholder="Ada" />
+        </div>
+        <div class="form-group">
+          <label for="lname">Last name</label>
+          <input type="text" id="lname" placeholder="Lovelace" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="ada@example.com" />
+      </div>
+      <div class="form-group">
+        <label for="message">Message</label>
+        <textarea id="message" placeholder="Tell us what's on your mind..."></textarea>
+      </div>
+      <button class="form-submit">Send message →</button>
+    </div>
   </div>
-</main>
+</section>
 
-<footer>Powered by Claude — fixes are suggestions, review before running in production.</footer>
-
-<script>
-  const runBtn = document.getElementById('runBtn');
-  const status = document.getElementById('status');
-  const statusText = document.getElementById('statusText');
-  const result = document.getElementById('result');
-  const codeOut = document.getElementById('codeOut');
-  const explanation = document.getElementById('explanation');
-  const errorBox = document.getElementById('errorBox');
-  const copyBtn = document.getElementById('copyBtn');
-
-  function escapeHtml(str) {
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-
-  function simpleMarkdownToHtml(md) {
-    const escaped = escapeHtml(md);
-    const withInlineCode = escaped.replace(/`([^`]+)`/g, '<code>$1</code>');
-    return withInlineCode
-      .split(/\n\s*\n/)
-      .map(p => '<p>' + p.trim().replace(/\n/g, '<br>') + '</p>')
-      .join('');
-  }
-
-  copyBtn.addEventListener('click', () => {
-    navigator.clipboard.writeText(codeOut.textContent).then(() => {
-      copyBtn.textContent = 'Copied';
-      setTimeout(() => copyBtn.textContent = 'Copy', 1500);
-    });
-  });
-
-  runBtn.addEventListener('click', async () => {
-    const lang = document.getElementById('lang').value;
-    const code = document.getElementById('code').value.trim();
-    const error = document.getElementById('error').value.trim();
-
-    errorBox.classList.remove('visible');
-    result.classList.remove('visible');
-
-    if (!code) {
-      errorBox.textContent = 'Paste some code first.';
-      errorBox.classList.add('visible');
-      return;
-    }
-
-    runBtn.disabled = true;
-    status.style.display = 'flex';
-    statusText.textContent = 'Analyzing and fixing...';
-
-    try {
-      const response = await fetch("/api/fix", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lang, code, error })
-      });
-
-      const parsed = await response.json();
-
-      if (!response.ok) {
-        throw new Error(parsed.error || `Server returned status ${response.status}`);
-      }
-
-      codeOut.textContent = parsed.fixedCode || '(no code returned)';
-      explanation.innerHTML = simpleMarkdownToHtml(parsed.explanation || '');
-      result.classList.add('visible');
-
-    } catch (err) {
-      errorBox.textContent = 'Something went wrong: ' + err.message + '. Try again, or simplify the input.';
-      errorBox.classList.add('visible');
-    } finally {
-      runBtn.disabled = false;
-      status.style.display = 'none';
-    }
-  });
-</script>
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Patch<span>work</span></div>
+  <p>© 2026 Patchwork. Made with ♥ for developers.</p>
+</footer>
 
 </body>
 </html>
