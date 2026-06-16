@@ -3,531 +3,290 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Patchwork — fix your code</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,700;1,700&display=swap" rel="stylesheet" />
+  <title>Patchwork — Fix your code</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --cream:    #FDFAF6;
-      --white:    #FFFFFF;
-      --blush:    #FFE8E0;
-      --sky:      #E0EEFF;
-      --mint:     #DFF4ED;
-      --coral:    #FF6B4A;
-      --navy:     #1A2033;
-      --slate:    #5A6278;
-      --border:   #EDE9E3;
-      --mono-bg:  #F5F3EF;
-    }
-
-    html { scroll-behavior: smooth; }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--cream);
-      color: var(--navy);
-      line-height: 1.6;
+      background: #0f0f13;
+      color: #e8e6e1;
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      padding-bottom: 60px;
     }
-
-    /* ── NAV ── */
-    nav {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(253,250,246,0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      padding: 0 5%;
-      display: flex; align-items: center; justify-content: space-between;
-      height: 62px;
-    }
-    .nav-logo {
-      font-family: 'Fraunces', serif;
-      font-size: 1.35rem;
-      color: var(--navy);
-      text-decoration: none;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .nav-logo span { color: var(--coral); }
-    .nav-links { display: flex; gap: 2rem; list-style: none; }
-    .nav-links a {
-      text-decoration: none;
-      font-size: 0.9rem;
-      font-weight: 500;
-      color: var(--slate);
-      transition: color 0.2s;
-    }
-    .nav-links a:hover { color: var(--coral); }
-    .nav-cta {
-      background: var(--coral);
-      color: white;
-      border: none;
-      padding: 0.55rem 1.2rem;
-      border-radius: 999px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      transition: opacity 0.2s, transform 0.15s;
-    }
-    .nav-cta:hover { opacity: 0.88; transform: translateY(-1px); }
-    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; }
-    .hamburger span { display: block; width: 22px; height: 2px; background: var(--navy); border-radius: 2px; }
-
-    /* ── HERO ── */
-    #home {
-      min-height: 88vh;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      text-align: center;
-      padding: 5rem 5% 4rem;
-      position: relative; overflow: hidden;
-    }
-    .hero-blob {
-      position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.55; pointer-events: none;
-    }
-    .blob-1 { width: 420px; height: 420px; background: #FFD6CC; top: -80px; left: -100px; }
-    .blob-2 { width: 340px; height: 340px; background: #C8DEFF; bottom: 0; right: -80px; }
-    .blob-3 { width: 260px; height: 260px; background: #C8F0E2; top: 40%; left: 60%; }
-
-    .hero-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: var(--blush);
-      color: var(--coral);
-      font-size: 0.78rem;
-      font-weight: 600;
-      padding: 0.35rem 0.9rem;
-      border-radius: 999px;
-      letter-spacing: 0.04em;
-      margin-bottom: 1.5rem;
-      position: relative; z-index: 1;
-    }
-    .hero-badge::before { content: '✦'; font-size: 0.7rem; }
-
-    h1 {
-      font-family: 'Fraunces', serif;
-      font-size: clamp(2.6rem, 6vw, 4.2rem);
-      line-height: 1.1;
-      max-width: 720px;
-      margin-bottom: 1.2rem;
-      position: relative; z-index: 1;
-    }
-    h1 em {
-      font-style: italic;
-      color: var(--coral);
-    }
-
-    .hero-sub {
-      font-size: 1.1rem;
-      color: var(--slate);
-      max-width: 520px;
-      margin-bottom: 2.5rem;
-      position: relative; z-index: 1;
-    }
-
-    .hero-actions {
-      display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
-      position: relative; z-index: 1;
-      margin-bottom: 3.5rem;
-    }
-    .btn-primary {
-      background: var(--coral); color: white;
-      padding: 0.75rem 1.8rem; border-radius: 999px;
-      font-weight: 600; font-size: 0.95rem;
-      text-decoration: none; border: none; cursor: pointer;
-      transition: opacity 0.2s, transform 0.15s;
-    }
-    .btn-primary:hover { opacity: 0.88; transform: translateY(-2px); }
-    .btn-ghost {
-      background: transparent; color: var(--navy);
-      padding: 0.75rem 1.8rem; border-radius: 999px;
-      font-weight: 500; font-size: 0.95rem;
-      text-decoration: none; border: 1.5px solid var(--border);
-      cursor: pointer;
-      transition: border-color 0.2s, transform 0.15s;
-    }
-    .btn-ghost:hover { border-color: var(--coral); transform: translateY(-2px); }
-
-    /* ── CODE WINDOW ── */
-    .code-window {
-      position: relative; z-index: 1;
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      box-shadow: 0 12px 48px rgba(26,32,51,0.08);
-      max-width: 640px; width: 100%;
-      overflow: hidden;
-      text-align: left;
-    }
-    .code-bar {
-      background: var(--mono-bg);
-      padding: 0.75rem 1.1rem;
-      display: flex; align-items: center; gap: 8px;
-      border-bottom: 1px solid var(--border);
-    }
-    .dot { width: 11px; height: 11px; border-radius: 50%; }
-    .dot-r { background: #FF6058; }
-    .dot-y { background: #FFBD2E; }
-    .dot-g { background: #28CA41; }
-    .code-label {
-      margin-left: auto;
-      font-family: 'DM Mono', monospace;
-      font-size: 0.72rem;
-      color: var(--slate);
-    }
-    .code-body { padding: 1.25rem 1.4rem; }
-    pre {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.8rem;
-      line-height: 1.7;
-      color: var(--navy);
-      white-space: pre-wrap;
-    }
-    .line-err { color: #D94040; text-decoration: underline wavy #D94040; }
-    .line-fix { color: #1A8C5C; }
-    .line-comment { color: var(--slate); }
-    .patch-tag {
-      display: inline-block;
-      background: var(--mint);
-      color: #1A8C5C;
-      font-family: 'DM Mono', monospace;
-      font-size: 0.7rem;
-      padding: 0.15rem 0.55rem;
-      border-radius: 6px;
-      margin-top: 0.5rem;
-    }
-
-    /* ── SECTIONS SHARED ── */
-    section { padding: 5rem 5%; }
-    .section-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--coral);
-      margin-bottom: 0.6rem;
-    }
-    h2 {
-      font-family: 'Fraunces', serif;
-      font-size: clamp(1.8rem, 3.5vw, 2.6rem);
-      line-height: 1.15;
-      margin-bottom: 1rem;
-    }
-    .section-sub {
-      color: var(--slate);
-      font-size: 1rem;
-      max-width: 540px;
-    }
-
-    /* ── FEATURES ── */
-    #features { background: var(--white); }
-    .features-header { max-width: 1100px; margin: 0 auto 3rem; }
-    .features-grid {
-      max-width: 1100px; margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-      gap: 1.5rem;
-    }
-    .feature-card {
-      background: var(--cream);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 1.8rem;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(26,32,51,0.07); }
-    .feature-icon {
-      width: 44px; height: 44px;
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.3rem;
-      margin-bottom: 1rem;
-    }
-    .icon-blush { background: var(--blush); }
-    .icon-sky   { background: var(--sky); }
-    .icon-mint  { background: var(--mint); }
-    .icon-lav   { background: #EDE0FF; }
-    .feature-card h3 {
-      font-size: 1rem; font-weight: 600;
-      margin-bottom: 0.4rem;
-    }
-    .feature-card p { font-size: 0.88rem; color: var(--slate); line-height: 1.55; }
-
-    /* ── ABOUT ── */
-    #about {
-      max-width: 1100px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4rem;
+    header {
+      border-bottom: 1px solid #1e1e28;
+      padding: 16px 24px;
+      display: flex;
       align-items: center;
+      gap: 10px;
     }
-    .about-visual {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 2rem;
-      box-shadow: 0 8px 32px rgba(26,32,51,0.06);
+    .logo {
+      background: linear-gradient(135deg, #e8613a, #c94b2b);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-weight: 800;
+      font-size: 14px;
     }
-    .about-stat-row {
-      display: flex; gap: 1rem; margin-bottom: 1rem;
+    .badge {
+      margin-left: auto;
+      font-size: 11px;
+      color: #555;
+      background: #1a1a22;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-family: monospace;
     }
-    .stat-pill {
-      flex: 1;
-      background: var(--cream);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1rem;
-      text-align: center;
-    }
-    .stat-pill strong {
-      display: block;
-      font-family: 'Fraunces', serif;
-      font-size: 1.7rem;
-      color: var(--coral);
-    }
-    .stat-pill span { font-size: 0.78rem; color: var(--slate); }
-    .about-tagline {
-      background: var(--blush);
-      border-radius: 12px;
-      padding: 1rem 1.2rem;
-      font-size: 0.88rem;
-      color: var(--coral);
-      font-weight: 500;
-      text-align: center;
-    }
-    .about-text p {
-      color: var(--slate);
-      font-size: 0.97rem;
-      margin-bottom: 1rem;
-      line-height: 1.7;
-    }
-
-    /* ── CONTACT ── */
-    #contact { background: var(--white); }
-    .contact-inner {
-      max-width: 600px;
+    main {
+      max-width: 700px;
       margin: 0 auto;
-      text-align: center;
+      padding: 40px 20px 0;
     }
-    .contact-inner h2 { margin-bottom: 0.5rem; }
-    .contact-inner .section-sub { margin: 0 auto 2rem; }
-    .contact-form { display: flex; flex-direction: column; gap: 1rem; text-align: left; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
-    label { font-size: 0.82rem; font-weight: 600; color: var(--navy); }
-    input, textarea {
-      padding: 0.7rem 1rem;
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.9rem;
-      background: var(--cream);
-      color: var(--navy);
+    h1 {
+      font-size: clamp(26px, 6vw, 40px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #fff 60%, #888);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    p.sub {
+      color: #666;
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    select {
+      background: #1a1a22;
+      border: 1px solid #2a2a35;
+      color: #e8e6e1;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      margin-bottom: 20px;
       outline: none;
+      min-width: 180px;
+    }
+    textarea {
+      width: 100%;
+      background: #13131a;
+      border: 1px solid #2a2a35;
+      border-radius: 10px;
+      padding: 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      resize: vertical;
+      outline: none;
+      margin-bottom: 20px;
       transition: border-color 0.2s;
     }
-    input:focus, textarea:focus { border-color: var(--coral); }
-    textarea { resize: vertical; min-height: 120px; }
-    .form-submit {
-      background: var(--coral); color: white;
-      padding: 0.8rem;
-      border: none; border-radius: 10px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.95rem; font-weight: 600;
+    textarea:focus { border-color: #e8613a; }
+    #codeInput { color: #c8ffc8; }
+    #errorInput { color: #ffb3b3; }
+    button#fixBtn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #e8613a, #c94b2b);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
       cursor: pointer;
-      transition: opacity 0.2s, transform 0.15s;
+      margin-bottom: 32px;
     }
-    .form-submit:hover { opacity: 0.88; transform: translateY(-1px); }
-
-    /* ── FOOTER ── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 2rem 5%;
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 1rem;
+    button#fixBtn:disabled {
+      background: #2a2a35;
+      color: #555;
+      cursor: not-allowed;
     }
-    .footer-logo {
-      font-family: 'Fraunces', serif;
-      font-size: 1.1rem;
-      color: var(--navy);
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, #e8613a33, transparent);
+      margin-bottom: 28px;
     }
-    .footer-logo span { color: var(--coral); }
-    footer p { font-size: 0.8rem; color: var(--slate); }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 768px) {
-      .nav-links { display: none; }
-      .hamburger { display: flex; }
-      #about { grid-template-columns: 1fr; gap: 2rem; padding: 3rem 5%; }
-      .form-row { grid-template-columns: 1fr; }
-      .about-visual { order: -1; }
+    .result-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
     }
-
-    @media (prefers-reduced-motion: reduce) {
-      * { transition: none !important; }
+    .copy-btn {
+      background: none;
+      border: 1px solid #2a2a35;
+      color: #888;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      width: auto;
     }
+    pre {
+      background: #0d1117;
+      border: 1px solid #2a2a35;
+      border-left: 3px solid #e8613a;
+      border-radius: 10px;
+      padding: 16px;
+      color: #c8ffc8;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-bottom: 20px;
+    }
+    .explanation {
+      background: #13131a;
+      border: 1px solid #2a2a35;
+      border-left: 3px solid #5b8dee;
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.8;
+      color: #b0b8cc;
+      white-space: pre-wrap;
+    }
+    .error-box {
+      background: #1f0f0f;
+      border: 1px solid #5a1a1a;
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: #ff8080;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .hint {
+      text-align: center;
+      font-size: 12px;
+      color: #3a3a48;
+      margin-top: 16px;
+    }
+    #results { display: none; }
   </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <a href="#home" class="nav-logo">Patch<span>work</span></a>
-  <ul class="nav-links">
-    <li><a href="#home">Home</a></li>
-    <li><a href="#features">Features</a></li>
-    <li><a href="#about">About</a></li>
-    <li><a href="#contact">Contact</a></li>
-  </ul>
-  <a href="#contact" class="nav-cta">Get started</a>
-  <div class="hamburger" onclick="this.classList.toggle('open')">
-    <span></span><span></span><span></span>
+<header>
+  <div class="logo">⚙ Patchwork</div>
+  <span class="badge">powered by Claude</span>
+</header>
+
+<main>
+  <h1>Paste broken code.<br>Get it fixed.</h1>
+  <p class="sub">Drop in your snippet and the error. Claude finds what's wrong, fixes it, and explains every change.</p>
+
+  <label>Language</label>
+  <select id="language">
+    <option>Python</option>
+    <option>JavaScript</option>
+    <option>TypeScript</option>
+    <option>Java</option>
+    <option>C++</option>
+    <option>C</option>
+    <option>Go</option>
+    <option>Rust</option>
+    <option>Ruby</option>
+    <option>PHP</option>
+    <option>SQL</option>
+    <option>Other</option>
+  </select>
+
+  <label>Your Code</label>
+  <textarea id="codeInput" rows="10" placeholder="Paste your broken code here..."></textarea>
+
+  <label>Error / Traceback <span style="font-weight:400;text-transform:none;color:#444">(optional)</span></label>
+  <textarea id="errorInput" rows="4" placeholder="Paste the error message here..."></textarea>
+
+  <div id="errorBox" class="error-box" style="display:none"></div>
+
+  <button id="fixBtn" onclick="fixCode()">Fix my code →</button>
+
+  <div id="results">
+    <div class="divider"></div>
+
+    <div class="result-label">
+      <label style="margin:0">✓ Fixed Code</label>
+      <button class="copy-btn" onclick="copyText('fixedCode', this)">Copy</button>
+    </div>
+    <pre id="fixedCode"></pre>
+
+    <div class="result-label">
+      <label style="margin:0">What changed & why</label>
+      <button class="copy-btn" onclick="copyText('explanationBox', this)">Copy</button>
+    </div>
+    <div class="explanation" id="explanationBox"></div>
+
+    <p class="hint">AI suggestions — review before running in production.</p>
   </div>
-</nav>
+</main>
 
-<!-- HERO -->
-<section id="home">
-  <div class="hero-blob blob-1"></div>
-  <div class="hero-blob blob-2"></div>
-  <div class="hero-blob blob-3"></div>
+<script>
+  async function fixCode() {
+    const code = document.getElementById('codeInput').value.trim();
+    const error = document.getElementById('errorInput').value.trim();
+    const language = document.getElementById('language').value;
+    const btn = document.getElementById('fixBtn');
+    const errorBox = document.getElementById('errorBox');
+    const results = document.getElementById('results');
 
-  <div class="hero-badge">AI-powered code repair</div>
+    if (!code) return;
 
-  <h1>Your code, <em>stitched</em><br>back together</h1>
-  <p class="hero-sub">Patchwork finds bugs, explains what went wrong, and gives you a clean fix — in seconds.</p>
+    btn.disabled = true;
+    btn.textContent = 'Analyzing & fixing...';
+    errorBox.style.display = 'none';
+    results.style.display = 'none';
 
-  <div class="hero-actions">
-    <a href="#contact" class="btn-primary">Try Patchwork free</a>
-    <a href="#features" class="btn-ghost">See how it works</a>
-  </div>
+    try {
+      const response = await fetch('/api/fix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, language, error })
+      });
 
-  <div class="code-window">
-    <div class="code-bar">
-      <div class="dot dot-r"></div>
-      <div class="dot dot-y"></div>
-      <div class="dot dot-g"></div>
-      <span class="code-label">app.py — patchwork</span>
-    </div>
-    <div class="code-body">
-      <pre><span class="line-comment"># Before</span>
-<span class="line-err">def greet(name)
-    print("Hello, " + name)</span>
+      const data = await response.json();
+      const text = data.content?.map(b => b.text || '').join('') || '';
 
-<span class="line-comment"># After — Patchwork fixed it</span>
-<span class="line-fix">def greet(name):
-    print(f"Hello, {name}")</span>
+      const fixedMatch = text.match(/<fixed_code>([\s\S]*?)<\/fixed_code>/);
+      const explainMatch = text.match(/<explanation>([\s\S]*?)<\/explanation>/);
 
-<span class="patch-tag">✓ 2 issues patched</span></pre>
-    </div>
-  </div>
-</section>
+      if (fixedMatch && explainMatch) {
+        document.getElementById('fixedCode').textContent = fixedMatch[1].trim();
+        document.getElementById('explanationBox').textContent = explainMatch[1].trim();
+        results.style.display = 'block';
+        results.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        errorBox.textContent = "⚠ Couldn't parse response. Try again.";
+        errorBox.style.display = 'block';
+      }
+    } catch (e) {
+      errorBox.textContent = '⚠ Network error — check your connection and try again.';
+      errorBox.style.display = 'block';
+    }
 
-<!-- FEATURES -->
-<section id="features">
-  <div class="features-header">
-    <div class="section-label">Features</div>
-    <h2>Everything you need<br>to ship clean code</h2>
-    <p class="section-sub">Patchwork handles the tedious stuff so you can stay in flow.</p>
-  </div>
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon icon-blush">🔍</div>
-      <h3>Instant bug detection</h3>
-      <p>Paste your code and Patchwork pinpoints the exact lines causing errors — no stack trace decoding required.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon icon-mint">🩹</div>
-      <h3>One-click fixes</h3>
-      <p>Get a corrected version of your code ready to copy. No vague suggestions, just working solutions.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon icon-sky">💬</div>
-      <h3>Plain-English explanations</h3>
-      <p>Understand <em>why</em> something broke, not just how to fix it. Great for learning as you go.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon icon-lav">⚡</div>
-      <h3>Multi-language support</h3>
-      <p>Python, JavaScript, TypeScript, Go, Rust — Patchwork speaks your language.</p>
-    </div>
-  </div>
-</section>
+    btn.disabled = false;
+    btn.textContent = 'Fix my code →';
+  }
 
-<!-- ABOUT -->
-<div style="padding: 5rem 5%;">
-  <section id="about">
-    <div class="about-visual">
-      <div class="about-stat-row">
-        <div class="stat-pill">
-          <strong>98%</strong>
-          <span>fix accuracy</span>
-        </div>
-        <div class="stat-pill">
-          <strong>&lt;3s</strong>
-          <span>average fix time</span>
-        </div>
-      </div>
-      <div class="about-stat-row">
-        <div class="stat-pill">
-          <strong>12+</strong>
-          <span>languages</span>
-        </div>
-        <div class="stat-pill">
-          <strong>∞</strong>
-          <span>patience for bugs</span>
-        </div>
-      </div>
-      <div class="about-tagline">
-        Built for developers who'd rather build than debug.
-      </div>
-    </div>
-    <div class="about-text">
-      <div class="section-label">About</div>
-      <h2>We believe debugging shouldn't slow you down</h2>
-      <p>Patchwork was born out of frustration with the debugging loop — googling error messages, reading docs, and guessing. There had to be a better way.</p>
-      <p>We built an AI that actually understands your code in context, finds the root cause, and patches it — the same way a senior engineer would, but in seconds.</p>
-      <p>Whether you're a solo developer shipping fast or a team keeping production clean, Patchwork fits right into your workflow.</p>
-      <a href="#contact" class="btn-primary" style="display:inline-block; margin-top:0.5rem;">Start fixing for free</a>
-    </div>
-  </section>
-</div>
-
-<!-- CONTACT -->
-<section id="contact">
-  <div class="contact-inner">
-    <div class="section-label">Contact</div>
-    <h2>Get in touch</h2>
-    <p class="section-sub">Have a question, want to partner, or just want to say hi? We'd love to hear from you.</p>
-    <div class="contact-form">
-      <div class="form-row">
-        <div class="form-group">
-          <label for="fname">First name</label>
-          <input type="text" id="fname" placeholder="Ada" />
-        </div>
-        <div class="form-group">
-          <label for="lname">Last name</label>
-          <input type="text" id="lname" placeholder="Lovelace" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" placeholder="ada@example.com" />
-      </div>
-      <div class="form-group">
-        <label for="message">Message</label>
-        <textarea id="message" placeholder="Tell us what's on your mind..."></textarea>
-      </div>
-      <button class="form-submit">Send message →</button>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="footer-logo">Patch<span>work</span></div>
-  <p>© 2026 Patchwork. Made with ♥ for developers.</p>
-</footer>
+  function copyText(id, btn) {
+    const text = document.getElementById(id).textContent;
+    navigator.clipboard.writeText(text);
+    btn.textContent = '✓ Copied!';
+    btn.style.color = '#4ade80';
+    setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = '#888'; }, 2000);
+  }
+</script>
 
 </body>
 </html>
