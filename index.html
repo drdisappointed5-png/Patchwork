@@ -1,291 +1,420 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Patchwork — Fix your code</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: #0f0f13;
-      color: #e8e6e1;
-      font-family: 'Inter', system-ui, sans-serif;
-      min-height: 100vh;
-      padding-bottom: 60px;
-    }
-    header {
-      border-bottom: 1px solid #1e1e28;
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .logo {
-      background: linear-gradient(135deg, #e8613a, #c94b2b);
-      border-radius: 8px;
-      padding: 6px 10px;
-      font-weight: 800;
-      font-size: 14px;
-    }
-    .badge {
-      margin-left: auto;
-      font-size: 11px;
-      color: #555;
-      background: #1a1a22;
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-family: monospace;
-    }
-    main {
-      max-width: 700px;
-      margin: 0 auto;
-      padding: 40px 20px 0;
-    }
-    h1 {
-      font-size: clamp(26px, 6vw, 40px);
-      font-weight: 800;
-      letter-spacing: -1px;
-      line-height: 1.1;
-      margin-bottom: 12px;
-      background: linear-gradient(135deg, #fff 60%, #888);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    p.sub {
-      color: #666;
-      font-size: 15px;
-      line-height: 1.6;
-      margin-bottom: 32px;
-    }
-    label {
-      display: block;
-      font-size: 11px;
-      font-weight: 600;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
-    select {
-      background: #1a1a22;
-      border: 1px solid #2a2a35;
-      color: #e8e6e1;
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 14px;
-      margin-bottom: 20px;
-      outline: none;
-      min-width: 180px;
-    }
-    textarea {
-      width: 100%;
-      background: #13131a;
-      border: 1px solid #2a2a35;
-      border-radius: 10px;
-      padding: 14px;
-      font-family: 'Courier New', monospace;
-      font-size: 13px;
-      line-height: 1.7;
-      resize: vertical;
-      outline: none;
-      margin-bottom: 20px;
-      transition: border-color 0.2s;
-    }
-    textarea:focus { border-color: #e8613a; }
-    #codeInput { color: #c8ffc8; }
-    #errorInput { color: #ffb3b3; }
-    button#fixBtn {
-      width: 100%;
-      padding: 15px;
-      background: linear-gradient(135deg, #e8613a, #c94b2b);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      margin-bottom: 32px;
-    }
-    button#fixBtn:disabled {
-      background: #2a2a35;
-      color: #555;
-      cursor: not-allowed;
-    }
-    .divider {
-      height: 1px;
-      background: linear-gradient(90deg, #e8613a33, transparent);
-      margin-bottom: 28px;
-    }
-    .result-label {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    .copy-btn {
-      background: none;
-      border: 1px solid #2a2a35;
-      color: #888;
-      border-radius: 6px;
-      padding: 5px 10px;
-      font-size: 12px;
-      cursor: pointer;
-      width: auto;
-    }
-    pre {
-      background: #0d1117;
-      border: 1px solid #2a2a35;
-      border-left: 3px solid #e8613a;
-      border-radius: 10px;
-      padding: 16px;
-      color: #c8ffc8;
-      font-family: 'Courier New', monospace;
-      font-size: 13px;
-      line-height: 1.7;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
-      margin-bottom: 20px;
-    }
-    .explanation {
-      background: #13131a;
-      border: 1px solid #2a2a35;
-      border-left: 3px solid #5b8dee;
-      border-radius: 10px;
-      padding: 16px;
-      font-size: 14px;
-      line-height: 1.8;
-      color: #b0b8cc;
-      white-space: pre-wrap;
-    }
-    .error-box {
-      background: #1f0f0f;
-      border: 1px solid #5a1a1a;
-      border-radius: 8px;
-      padding: 12px 14px;
-      color: #ff8080;
-      font-size: 14px;
-      margin-bottom: 20px;
-    }
-    .hint {
-      text-align: center;
-      font-size: 12px;
-      color: #3a3a48;
-      margin-top: 16px;
-    }
-    #results { display: none; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patchwork — fix your code</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-2: #1c2128;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --accent: #7ee787;
+    --accent-dim: #2d4a2f;
+    --error: #ff7b72;
+    --error-dim: #4a2424;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 24px 32px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .logo {
+    font-weight: 700;
+    font-size: 1.4rem;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .logo .mono {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    font-size: 1.2rem;
+  }
+
+  header .tag {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  main {
+    flex: 1;
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .lede {
+    color: var(--text-dim);
+    font-size: 1rem;
+    max-width: 60ch;
+    line-height: 1.6;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 800px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .field { display: flex; flex-direction: column; gap: 8px; }
+
+  label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+  }
+
+  select, textarea, button {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.92rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+  }
+
+  select {
+    padding: 10px 12px;
+    cursor: pointer;
+    width: fit-content;
+  }
+
+  textarea {
+    padding: 14px;
+    resize: vertical;
+    min-height: 220px;
+    line-height: 1.5;
+    tab-size: 2;
+  }
+
+  textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  textarea::placeholder { color: #4d5560; }
+
+  .error-input { min-height: 110px; }
+
+  .field.full { grid-column: 1 / -1; }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  button.run {
+    background: var(--accent);
+    color: #04220a;
+    border: none;
+    font-weight: 600;
+    padding: 13px 28px;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+    font-size: 0.95rem;
+  }
+
+  button.run:hover:not(:disabled) {
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+
+  button.run:active:not(:disabled) { transform: scale(0.98); }
+
+  button.run:disabled {
+    background: var(--panel-2);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    border: 1px solid var(--border);
+  }
+
+  .status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+    animation: pulse 1.2s infinite ease-in-out;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  .result {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: none;
+  }
+
+  .result.visible { display: block; }
+
+  .result-header {
+    background: var(--panel-2);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    text-transform: none;
+    letter-spacing: normal;
+    border-radius: 4px;
+  }
+
+  .copy-btn:hover { color: var(--text); border-color: var(--text-dim); }
+
+  pre.code-out {
+    background: var(--panel);
+    padding: 16px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    white-space: pre;
+  }
+
+  .explanation {
+    padding: 16px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    line-height: 1.65;
+    font-size: 0.92rem;
+    color: var(--text);
+  }
+
+  .explanation p { margin-bottom: 10px; }
+  .explanation p:last-child { margin-bottom: 0; }
+  .explanation code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--panel-2);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--accent);
+  }
+
+  .error-box {
+    border: 1px solid var(--error-dim);
+    background: rgba(255, 123, 114, 0.06);
+    border-radius: 8px;
+    padding: 14px 16px;
+    color: var(--error);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    display: none;
+  }
+
+  .error-box.visible { display: block; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 18px 32px;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+  }
+</style>
 </head>
 <body>
 
 <header>
-  <div class="logo">⚙ Patchwork</div>
-  <span class="badge">powered by Claude</span>
+  <div class="logo"><span class="mono">&gt;_</span> Patchwork</div>
+  <div class="tag">paste code + error → get a fix</div>
 </header>
 
 <main>
-  <h1>Paste broken code.<br>Get it fixed.</h1>
-  <p class="sub">Drop in your snippet and the error. Claude finds what's wrong, fixes it, and explains every change.</p>
+  <p class="lede">
+    Paste a broken snippet and the error or traceback it produces.
+    Patchwork sends both to Claude, returns a corrected version of your
+    code, and explains what changed and why.
+  </p>
 
-  <label>Language</label>
-  <select id="language">
-    <option>Python</option>
-    <option>JavaScript</option>
-    <option>TypeScript</option>
-    <option>Java</option>
-    <option>C++</option>
-    <option>C</option>
-    <option>Go</option>
-    <option>Rust</option>
-    <option>Ruby</option>
-    <option>PHP</option>
-    <option>SQL</option>
-    <option>Other</option>
-  </select>
-
-  <label>Your Code</label>
-  <textarea id="codeInput" rows="10" placeholder="Paste your broken code here..."></textarea>
-
-  <label>Error / Traceback <span style="font-weight:400;text-transform:none;color:#444">(optional)</span></label>
-  <textarea id="errorInput" rows="4" placeholder="Paste the error message here..."></textarea>
-
-  <div id="errorBox" class="error-box" style="display:none"></div>
-
-  <button id="fixBtn" onclick="fixCode()">Fix my code →</button>
-
-  <div id="results">
-    <div class="divider"></div>
-
-    <div class="result-label">
-      <label style="margin:0">✓ Fixed Code</label>
-      <button class="copy-btn" onclick="copyText('fixedCode', this)">Copy</button>
+  <div class="grid">
+    <div class="field">
+      <label for="lang">Language</label>
+      <select id="lang">
+        <option value="Python">Python</option>
+        <option value="JavaScript">JavaScript</option>
+        <option value="TypeScript">TypeScript</option>
+        <option value="Java">Java</option>
+        <option value="C++">C++</option>
+        <option value="C">C</option>
+        <option value="Go">Go</option>
+        <option value="Rust">Rust</option>
+        <option value="Ruby">Ruby</option>
+        <option value="PHP">PHP</option>
+        <option value="SQL">SQL</option>
+        <option value="Other / not sure">Other / not sure</option>
+      </select>
     </div>
-    <pre id="fixedCode"></pre>
+  </div>
 
-    <div class="result-label">
-      <label style="margin:0">What changed & why</label>
-      <button class="copy-btn" onclick="copyText('explanationBox', this)">Copy</button>
+  <div class="grid">
+    <div class="field">
+      <label for="code">Your code</label>
+      <textarea id="code" placeholder="Paste the code that's failing..." spellcheck="false"></textarea>
     </div>
-    <div class="explanation" id="explanationBox"></div>
+    <div class="field">
+      <label for="error">Error / traceback</label>
+      <textarea id="error" class="error-input" placeholder="Paste the error message or traceback..." spellcheck="false"></textarea>
+    </div>
+  </div>
 
-    <p class="hint">AI suggestions — review before running in production.</p>
+  <div class="actions">
+    <button class="run" id="runBtn">Fix my code</button>
+    <div class="status" id="status" style="display:none;">
+      <span class="dot"></span><span id="statusText">Thinking...</span>
+    </div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="result" id="result">
+    <div class="result-header">
+      <span>Fixed code</span>
+      <button class="copy-btn" id="copyBtn">Copy</button>
+    </div>
+    <pre class="code-out" id="codeOut"></pre>
+    <div class="explanation" id="explanation"></div>
   </div>
 </main>
 
+<footer>Powered by Claude — fixes are suggestions, review before running in production.</footer>
+
 <script>
-  async function fixCode() {
-    const code = document.getElementById('codeInput').value.trim();
-    const error = document.getElementById('errorInput').value.trim();
-    const language = document.getElementById('language').value;
-    const btn = document.getElementById('fixBtn');
-    const errorBox = document.getElementById('errorBox');
-    const results = document.getElementById('results');
+  const runBtn = document.getElementById('runBtn');
+  const status = document.getElementById('status');
+  const statusText = document.getElementById('statusText');
+  const result = document.getElementById('result');
+  const codeOut = document.getElementById('codeOut');
+  const explanation = document.getElementById('explanation');
+  const errorBox = document.getElementById('errorBox');
+  const copyBtn = document.getElementById('copyBtn');
 
-    if (!code) return;
+  function escapeHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
 
-    btn.disabled = true;
-    btn.textContent = 'Analyzing & fixing...';
-    errorBox.style.display = 'none';
-    results.style.display = 'none';
+  function simpleMarkdownToHtml(md) {
+    const escaped = escapeHtml(md);
+    const withInlineCode = escaped.replace(/`([^`]+)`/g, '<code>$1</code>');
+    return withInlineCode
+      .split(/\n\s*\n/)
+      .map(p => '<p>' + p.trim().replace(/\n/g, '<br>') + '</p>')
+      .join('');
+  }
 
-    try {
-      const response = await fetch('/api/fix', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, language, error })
-      });
+  copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(codeOut.textContent).then(() => {
+      copyBtn.textContent = 'Copied';
+      setTimeout(() => copyBtn.textContent = 'Copy', 1500);
+    });
+  });
 
-      const data = await response.json();
-      const text = data.content?.map(b => b.text || '').join('') || '';
+  runBtn.addEventListener('click', async () => {
+    const lang = document.getElementById('lang').value;
+    const code = document.getElementById('code').value.trim();
+    const error = document.getElementById('error').value.trim();
 
-      const fixedMatch = text.match(/<fixed_code>([\s\S]*?)<\/fixed_code>/);
-      const explainMatch = text.match(/<explanation>([\s\S]*?)<\/explanation>/);
+    errorBox.classList.remove('visible');
+    result.classList.remove('visible');
 
-      if (fixedMatch && explainMatch) {
-        document.getElementById('fixedCode').textContent = fixedMatch[1].trim();
-        document.getElementById('explanationBox').textContent = explainMatch[1].trim();
-        results.style.display = 'block';
-        results.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        errorBox.textContent = "⚠ Couldn't parse response. Try again.";
-        errorBox.style.display = 'block';
-      }
-    } catch (e) {
-      errorBox.textContent = '⚠ Network error — check your connection and try again.';
-      errorBox.style.display = 'block';
+    if (!code) {
+      errorBox.textContent = 'Paste some code first.';
+      errorBox.classList.add('visible');
+      return;
     }
 
-    btn.disabled = false;
-    btn.textContent = 'Fix my code →';
-  }
+    runBtn.disabled = true;
+    status.style.display = 'flex';
+    statusText.textContent = 'Analyzing and fixing...';
 
-  function copyText(id, btn) {
-    const text = document.getElementById(id).textContent;
-    navigator.clipboard.writeText(text);
-    btn.textContent = '✓ Copied!';
-    btn.style.color = '#4ade80';
-    setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = '#888'; }, 2000);
-  }
+    try {
+      const response = await fetch("/api/fix", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lang, code, error })
+      });
+
+      const parsed = await response.json();
+
+      if (!response.ok) {
+        throw new Error(parsed.error || `Server returned status ${response.status}`);
+      }
+
+      codeOut.textContent = parsed.fixedCode || '(no code returned)';
+      explanation.innerHTML = simpleMarkdownToHtml(parsed.explanation || '');
+      result.classList.add('visible');
+
+    } catch (err) {
+      errorBox.textContent = 'Something went wrong: ' + err.message + '. Try again, or simplify the input.';
+      errorBox.classList.add('visible');
+    } finally {
+      runBtn.disabled = false;
+      status.style.display = 'none';
+    }
+  });
 </script>
 
 </body>
