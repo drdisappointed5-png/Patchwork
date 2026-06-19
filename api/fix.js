@@ -1,6 +1,51 @@
+// api/fix.js
+// Vercel serverless function with server-side IP rate limiting (10 req/day/IP)
+
+const ipStore = new Map(); // resets when the function cold-starts
+
+const DAILY_LIMIT = 10;
+
+function getTodayKey() {
+  const d = new Date();
+  return `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`;
+}
+
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return req.socket?.remoteAddress || 'unknown';
+}
+
+function checkRateLimit(ip) {
+  const today = getTodayKey();
+  const key = `${ip}::${today}`;
+
+  if (!ipStore.has(key)) {
+    // Clean up old keys to prevent memory leak
+    for (const k of ipStore.keys()) {
+      if (!k.endsWith(today)) ipStore.delete(k);
+    }
+    ipStore.set(key, 0);
+  }
+
+  const count = ipStore.get(key);
+  if (count >= DAILY_LIMIT) return false;
+
+  ipStore.set(key, count + 1);
+  return true;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // --- IP RATE LIMIT CHECK ---
+  const ip = getClientIp(req);
+  if (!checkRateLimit(ip)) {
+    return res.status(429).json({
+      error: "Daily limit reached (10 fixes/day per IP). Try again tomorrow."
+    });
   }
 
   const { lang, code, error, mode } = req.body || {};
