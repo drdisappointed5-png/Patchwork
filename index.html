@@ -29,300 +29,565 @@
 <!-- GOOGLE SITE VERIFICATION -->
 <meta name="google-site-verification" content="NE0ZZYGjVfS_nsWM-9SJ_66knQFClg5d32Qw-faEE1s" />
 
+<!-- PRISM.JS — SYNTAX HIGHLIGHTING -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
   :root {
-    --bg: #fdfbf6;
-    --panel: #ffffff;
-    --panel-2: #f6f3ec;
-    --border: #e8e2d4;
-    --text: #2b2a26;
-    --text-dim: #8a8474;
-    --accent: #2f6fed;
-    --accent-soft: #e8f0fe;
-    --accent-dim: #1f4fb8;
-    --error: #c0392b;
-    --error-bg: #fdf0ee;
-    --error-border: #f3d4cf;
+    --bg: #16181d;
+    --panel: #1f2229;
+    --panel-2: #262a33;
+    --border: #343843;
+    --text: #e8e6e1;
+    --text-dim: #6b7280;
+    --accent: #ff6b4a;
+    --accent-dim: #d9512f;
+    --accent-soft: rgba(255, 107, 74, 0.12);
+    --good: #3ddc84;
+    --error: #ff6b6b;
+    --error-bg: rgba(255, 107, 107, 0.08);
+    --error-border: rgba(255, 107, 107, 0.3);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  html { -webkit-text-size-adjust: 100%; }
+
   body {
     background: var(--bg);
+    background-image:
+      radial-gradient(circle at 100% 0%, rgba(255, 107, 74, 0.06), transparent 50%);
     color: var(--text);
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'IBM Plex Sans', sans-serif;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
   }
 
+  a { color: var(--accent); }
+
+  /* ---------- HEADER ---------- */
   header {
     border-bottom: 1px solid var(--border);
-    padding: 24px 32px;
+    padding: 20px 32px;
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 12px;
-    background: var(--panel);
+    background: rgba(31, 34, 41, 0.6);
+    backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
 
   .logo {
-    font-weight: 700;
-    font-size: 1.4rem;
-    letter-spacing: -0.02em;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
     display: flex;
-    align-items: baseline;
-    gap: 8px;
+    align-items: center;
+    gap: 10px;
+    color: var(--text);
   }
 
-  .logo .mono {
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--accent);
-    font-size: 1.2rem;
-  }
+  .logo .bracket { color: var(--accent); }
 
   header .tag {
     color: var(--text-dim);
-    font-size: 0.9rem;
-    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    font-family: 'IBM Plex Mono', monospace;
   }
 
+  /* ---------- MAIN ---------- */
   main {
     flex: 1;
-    max-width: 1100px;
+    max-width: 1080px;
     width: 100%;
     margin: 0 auto;
-    padding: 32px 24px 64px;
+    padding: 40px 24px 72px;
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 32px;
   }
+
+  /* hero / prompt line */
+  .hero {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .prompt-line {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .prompt-line::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--good);
+    box-shadow: 0 0 0 3px rgba(61, 220, 132, 0.15);
+  }
+
+  .hero h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: clamp(1.5rem, 4vw, 2.1rem);
+    line-height: 1.3;
+    color: var(--text);
+    max-width: 46ch;
+  }
+
+  .hero h1 .accent-text { color: var(--accent); }
 
   .lede {
     color: var(--text-dim);
-    font-size: 1rem;
-    max-width: 64ch;
-    line-height: 1.6;
-  }
-
-  .about-card {
-    background: var(--accent-soft);
-    border: 1px solid #d3e3fb;
-    border-radius: 10px;
-    padding: 20px 22px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .about-card h2 {
-    font-size: 0.95rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--accent-dim);
-  }
-
-  .about-card p {
-    color: var(--text);
-    font-size: 0.93rem;
+    font-size: 0.98rem;
+    max-width: 62ch;
     line-height: 1.65;
   }
 
-  .about-card ol {
-    color: var(--text);
-    font-size: 0.93rem;
-    line-height: 1.7;
-    padding-left: 1.3em;
+  /* ---------- HOW IT WORKS ---------- */
+  .about-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
   }
 
-  .usage-note {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
-    color: var(--accent-dim);
-    background: #fff;
-    border: 1px solid #d3e3fb;
-    border-radius: 6px;
-    padding: 3px 9px;
-    display: inline-flex;
-    width: fit-content;
+  .about-card h2 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
-  .grid {
+  .about-card h2::before { content: '//'; color: var(--accent); }
+
+  .steps {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
   }
 
   @media (max-width: 800px) {
-    .grid { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 480px) {
+    .steps { grid-template-columns: 1fr; }
   }
 
-  .field { display: flex; flex-direction: column; gap: 8px; }
-
-  label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-dim);
+  .step {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
 
-  select, textarea, button {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.92rem;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: var(--panel);
+  .step .step-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+  }
+
+  .step p {
+    font-size: 0.86rem;
     color: var(--text);
+    line-height: 1.5;
   }
 
-  select {
-    padding: 10px 12px;
-    cursor: pointer;
+  .about-card .note {
+    color: var(--text-dim);
+    font-size: 0.84rem;
+    line-height: 1.6;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+  }
+
+  .usage-note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid rgba(255, 107, 74, 0.25);
+    border-radius: 4px;
+    padding: 2px 8px;
+    display: inline-flex;
     width: fit-content;
   }
 
+  /* ---------- WORKBENCH (split pane) ---------- */
+  .workbench {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--panel);
+  }
+
+  .workbench-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel-2);
+  }
+
+  .workbench-bar .dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .workbench-bar .dots span {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--border);
+  }
+
+  .workbench-bar select {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.82rem;
+    background: transparent;
+    color: var(--text);
+    border: none;
+    cursor: pointer;
+    text-align: right;
+  }
+
+  .workbench-bar select:focus { outline: none; }
+  .workbench-bar select option { background: var(--panel); color: var(--text); }
+
+  .panes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  @media (max-width: 800px) {
+    .panes { grid-template-columns: 1fr; }
+  }
+
+  .pane {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pane:first-child {
+    border-right: 1px solid var(--border);
+  }
+
+  @media (max-width: 800px) {
+    .pane:first-child {
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+    }
+  }
+
+  .pane-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    padding: 12px 16px 0;
+  }
+
   textarea {
-    padding: 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    background: transparent;
+    color: var(--text);
+    border: none;
+    padding: 10px 16px 18px;
     resize: vertical;
-    min-height: 220px;
-    line-height: 1.5;
+    min-height: 200px;
     tab-size: 2;
   }
 
-  textarea:focus, select:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
+  .pane:first-child textarea { min-height: 260px; }
+
+  textarea:focus { outline: none; }
+  textarea::placeholder { color: #4a4e58; }
+
+  /* ---------- MODE TOGGLE ---------- */
+  .mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
   }
 
-  textarea::placeholder { color: #b3ad9c; }
+  .mode-toggle button {
+    font-family: 'IBM Plex Mono', monospace;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.12s ease;
+  }
 
-  .error-input { min-height: 110px; }
+  .mode-toggle button.active {
+    background: var(--accent-soft);
+    border-color: rgba(255, 107, 74, 0.4);
+    color: var(--accent);
+  }
 
-  .field.full { grid-column: 1 / -1; }
+  .mode-toggle button:hover:not(.active) {
+    border-color: var(--text-dim);
+    color: var(--text);
+  }
 
+  /* ---------- ACTION ROW ---------- */
   .actions {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 18px;
     flex-wrap: wrap;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--panel-2);
   }
 
   button.run {
+    font-family: 'IBM Plex Mono', monospace;
     background: var(--accent);
-    color: #fff;
+    color: #1a1a1a;
     border: none;
     font-weight: 600;
-    padding: 13px 28px;
+    font-size: 0.9rem;
+    padding: 12px 26px;
+    border-radius: 3px;
     cursor: pointer;
-    transition: transform 0.1s ease, box-shadow 0.15s ease, background 0.15s ease;
-    font-size: 0.95rem;
+    transition: transform 0.1s ease, background 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
   }
 
-  button.run:hover:not(:disabled) {
-    background: var(--accent-dim);
-    box-shadow: 0 0 0 3px var(--accent-soft);
-  }
+  button.run::after { content: '→'; }
 
-  button.run:active:not(:disabled) { transform: scale(0.98); }
+  button.run:hover:not(:disabled) { background: #ff7e60; }
+  button.run:active:not(:disabled) { transform: scale(0.97); }
 
   button.run:disabled {
-    background: var(--panel-2);
+    background: var(--border);
     color: var(--text-dim);
     cursor: not-allowed;
-    border: 1px solid var(--border);
   }
+  button.run:disabled::after { content: ''; }
 
   .status {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.84rem;
+    color: var(--accent);
     display: flex;
     align-items: center;
     gap: 8px;
   }
 
   .dot {
-    width: 8px; height: 8px; border-radius: 50%;
+    width: 7px; height: 7px; border-radius: 50%;
     background: var(--accent);
     display: inline-block;
-    animation: pulse 1.2s infinite ease-in-out;
+    animation: pulse 1.1s infinite ease-in-out;
   }
 
   @keyframes pulse {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 1; }
+    0%, 100% { opacity: 0.25; transform: scale(0.85); }
+    50% { opacity: 1; transform: scale(1); }
   }
 
+  /* quota dots */
   .quota-display {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.82rem;
-    color: var(--text-dim);
     margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-dim);
   }
 
-  .quota-display strong {
-    color: var(--accent-dim);
+  .quota-dots {
+    display: flex;
+    gap: 4px;
   }
 
+  .quota-dots span {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--border);
+  }
+
+  .quota-dots span.filled { background: var(--accent); }
+
+  /* ---------- ERROR ---------- */
+  .error-box {
+    border: 1px solid var(--error-border);
+    background: var(--error-bg);
+    border-radius: 4px;
+    padding: 14px 16px;
+    color: var(--error);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    display: none;
+  }
+
+  .error-box.visible { display: block; }
+  .error-box::before { content: '✕ '; }
+
+  /* ---------- RESULT ---------- */
   .result {
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 4px;
     overflow: hidden;
     display: none;
     background: var(--panel);
   }
 
-  .result.visible { display: block; }
+  .result.visible {
+    display: block;
+    animation: reveal 0.25s ease;
+  }
+
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
   .result-header {
     background: var(--panel-2);
     padding: 12px 16px;
     border-bottom: 1px solid var(--border);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--text-dim);
+    color: var(--good);
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
 
+  .result-header span:first-child::before { content: '✓ '; }
+
   .copy-btn {
+    font-family: 'IBM Plex Mono', monospace;
     background: transparent;
     border: 1px solid var(--border);
     color: var(--text-dim);
-    padding: 4px 10px;
-    font-size: 0.75rem;
+    padding: 4px 12px;
+    font-size: 0.74rem;
     cursor: pointer;
-    text-transform: none;
-    letter-spacing: normal;
-    border-radius: 4px;
+    border-radius: 3px;
   }
 
   .copy-btn:hover { color: var(--text); border-color: var(--text-dim); }
 
+  .result-header .view-toggle {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+    margin-right: 12px;
+  }
+
+  .result-header .view-toggle button {
+    font-family: 'IBM Plex Mono', monospace;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+
+  .result-header .view-toggle button.active {
+    color: var(--accent);
+    border-color: rgba(255, 107, 74, 0.4);
+  }
+
   pre.code-out {
-    background: var(--panel);
-    padding: 16px;
+    margin: 0;
+    padding: 18px;
     overflow-x: auto;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'IBM Plex Mono', monospace;
     font-size: 0.85rem;
     line-height: 1.6;
     white-space: pre;
-    color: var(--text);
+    background: #1c1d22;
   }
 
+  pre.code-out code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    text-shadow: none;
+  }
+
+  pre.diff-out {
+    margin: 0;
+    padding: 12px 0;
+    overflow-x: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.65;
+    background: #1c1d22;
+    display: none;
+  }
+
+  pre.diff-out.visible { display: block; }
+  pre.code-out.hidden-pane { display: none; }
+
+  .diff-line {
+    display: block;
+    padding: 1px 18px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .diff-line.added {
+    background: rgba(61, 220, 132, 0.1);
+    color: #b8f5cf;
+  }
+  .diff-line.added::before { content: '+ '; color: var(--good); }
+
+  .diff-line.removed {
+    background: rgba(255, 107, 107, 0.08);
+    color: #ffc6c6;
+    text-decoration: line-through;
+    text-decoration-color: rgba(255, 107, 107, 0.4);
+  }
+  .diff-line.removed::before { content: '- '; color: var(--error); }
+
+  .diff-line.same {
+    color: var(--text-dim);
+  }
+  .diff-line.same::before { content: '  '; }
+
   .explanation {
-    padding: 16px;
+    padding: 18px;
     background: var(--panel);
     border-top: 1px solid var(--border);
-    line-height: 1.65;
+    line-height: 1.7;
     font-size: 0.92rem;
     color: var(--text);
   }
@@ -330,66 +595,168 @@
   .explanation p { margin-bottom: 10px; }
   .explanation p:last-child { margin-bottom: 0; }
   .explanation code {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'IBM Plex Mono', monospace;
     background: var(--panel-2);
-    padding: 1px 5px;
-    border-radius: 4px;
+    padding: 1px 6px;
+    border-radius: 3px;
     font-size: 0.85em;
-    color: var(--accent-dim);
+    color: var(--accent);
   }
 
-  .error-box {
-    border: 1px solid var(--error-border);
-    background: var(--error-bg);
-    border-radius: 8px;
-    padding: 14px 16px;
-    color: var(--error);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    display: none;
+  /* ---------- HISTORY ---------- */
+  .history {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 
-  .error-box.visible { display: block; }
+  .history-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
+  .history-title::before { content: '//'; color: var(--accent); }
+
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .history-item {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: border-color 0.12s ease;
+  }
+
+  .history-item:hover { border-color: var(--text-dim); }
+
+  .history-item .h-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+  }
+
+  .history-item .h-lang {
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .history-item .h-snippet {
+    color: var(--text-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .history-item .h-time {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.74rem;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+
+  .history-empty {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    padding: 14px;
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+  }
+
+  /* explanation-only result styling */
+  .explanation-only .code-out,
+  .explanation-only .diff-out,
+  .explanation-only .view-toggle,
+  .explanation-only .copy-btn {
+    display: none !important;
+  }
   footer {
     border-top: 1px solid var(--border);
-    padding: 18px 32px;
+    padding: 20px 32px;
     color: var(--text-dim);
-    font-size: 0.8rem;
-    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    font-family: 'IBM Plex Mono', monospace;
     text-align: center;
-    background: var(--panel);
+  }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .dot, .result.visible, .prompt-line::before { animation: none !important; }
+  }
+
+  /* visible keyboard focus */
+  button:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo"><span class="mono">&gt;_</span> Patchwork</div>
-  <div class="tag">paste code + error → get a fix</div>
+  <div class="logo"><span class="bracket">&gt;_</span> patchwork</div>
+  <div class="tag">code in. fix out.</div>
 </header>
 
 <main>
-  <p class="lede">
-    Paste a broken snippet and the error or traceback it produces.
-    Patchwork sends both to Claude, returns a corrected version of your
-    code, and explains what changed and why.
-  </p>
+
+  <div class="hero">
+    <div class="prompt-line">patchwork:~$ ready</div>
+    <h1>Paste your broken code.<br>Get a working <span class="accent-text">fix</span> back.</h1>
+    <p class="lede">
+      Drop in a snippet and the error or traceback it produces. Patchwork sends both
+      to Claude, returns a corrected version of your code, and explains what changed and why.
+    </p>
+  </div>
 
   <div class="about-card">
     <h2>How it works</h2>
-    <ol>
-      <li>Pick the language your code is written in.</li>
-      <li>Paste the broken code into "Your code."</li>
-      <li>Paste the error message or traceback it produced (or leave it blank if you just want a bug check).</li>
-      <li>Tap "Fix my code" — Claude reads both, finds the issue, and sends back a corrected version with a plain-language explanation of what changed.</li>
-    </ol>
-    <p>Fixes are suggestions, not guarantees — always review the corrected code before using it. Each browser gets <span class="usage-note">10 fixes / day</span>, resetting at midnight.</p>
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <p>Pick the language your code is written in.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">02</span>
+        <p>Paste the broken code into the left pane.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">03</span>
+        <p>Paste the error or traceback on the right (optional).</p>
+      </div>
+      <div class="step">
+        <span class="step-num">04</span>
+        <p>Run it — get back a fix plus a plain-language explanation.</p>
+      </div>
+    </div>
+    <p class="note">
+      Fixes are suggestions, not guarantees — always review corrected code before using it.
+      Each browser gets <span class="usage-note">10 fixes / day</span>, resetting at midnight.
+    </p>
   </div>
 
-  <div class="grid">
-    <div class="field">
-      <label for="lang">Language</label>
+  <div class="workbench">
+    <div class="workbench-bar">
+      <div class="dots"><span></span><span></span><span></span></div>
       <select id="lang">
         <option value="Python">Python</option>
         <option value="JavaScript">JavaScript</option>
@@ -405,54 +772,108 @@
         <option value="Other / not sure">Other / not sure</option>
       </select>
     </div>
-  </div>
 
-  <div class="grid">
-    <div class="field">
-      <label for="code">Your code</label>
-      <textarea id="code" placeholder="Paste the code that's failing..." spellcheck="false"></textarea>
+    <div class="panes">
+      <div class="pane">
+        <label class="pane-label" for="code">Your code</label>
+        <textarea id="code" placeholder="Paste the code that's failing..." spellcheck="false"></textarea>
+      </div>
+      <div class="pane">
+        <label class="pane-label" for="error">Error / traceback</label>
+        <textarea id="error" placeholder="Paste the error message or traceback..." spellcheck="false"></textarea>
+      </div>
     </div>
-    <div class="field">
-      <label for="error">Error / traceback</label>
-      <textarea id="error" class="error-input" placeholder="Paste the error message or traceback..." spellcheck="false"></textarea>
-    </div>
-  </div>
 
-  <div class="actions">
-    <button class="run" id="runBtn">Fix my code</button>
-    <div class="status" id="status" style="display:none;">
-      <span class="dot"></span><span id="statusText">Thinking...</span>
+    <div class="actions">
+      <button class="run" id="runBtn">Fix my code</button>
+      <div class="mode-toggle" role="group" aria-label="Result mode">
+        <button type="button" id="modeFix" class="active">Fix it</button>
+        <button type="button" id="modeExplain">Explain only</button>
+      </div>
+      <div class="status" id="status" style="display:none;">
+        <span class="dot"></span><span id="statusText">Thinking...</span>
+      </div>
+      <div class="quota-display" id="quotaDisplay"></div>
     </div>
-    <div class="quota-display" id="quotaDisplay"></div>
   </div>
 
   <div class="error-box" id="errorBox"></div>
 
   <div class="result" id="result">
     <div class="result-header">
-      <span>Fixed code</span>
+      <span id="resultLabel">Fixed code</span>
+      <div class="view-toggle" id="viewToggle">
+        <button type="button" id="viewFixed" class="active">Fixed</button>
+        <button type="button" id="viewDiff">Diff</button>
+      </div>
       <button class="copy-btn" id="copyBtn">Copy</button>
     </div>
-    <pre class="code-out" id="codeOut"></pre>
+    <pre class="code-out" id="codeOutWrap"><code id="codeOut"></code></pre>
+    <pre class="diff-out" id="diffOut"></pre>
     <div class="explanation" id="explanation"></div>
   </div>
+
+  <div class="history" id="historySection" style="display:none;">
+    <div class="history-title">Recent fixes</div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+
 </main>
 
 <footer>Powered by Claude — fixes are suggestions, review before running in production.</footer>
+
+<!-- PRISM.JS CORE + LANGUAGE COMPONENTS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
 
 <script>
   const runBtn = document.getElementById('runBtn');
   const status = document.getElementById('status');
   const statusText = document.getElementById('statusText');
   const result = document.getElementById('result');
+  const resultLabel = document.getElementById('resultLabel');
+  const codeOutWrap = document.getElementById('codeOutWrap');
   const codeOut = document.getElementById('codeOut');
+  const diffOut = document.getElementById('diffOut');
+  const viewToggle = document.getElementById('viewToggle');
+  const viewFixedBtn = document.getElementById('viewFixed');
+  const viewDiffBtn = document.getElementById('viewDiff');
   const explanation = document.getElementById('explanation');
   const errorBox = document.getElementById('errorBox');
   const copyBtn = document.getElementById('copyBtn');
   const quotaDisplay = document.getElementById('quotaDisplay');
+  const langSelect = document.getElementById('lang');
+  const modeFixBtn = document.getElementById('modeFix');
+  const modeExplainBtn = document.getElementById('modeExplain');
+  const codeInput = document.getElementById('code');
+  const errorInput = document.getElementById('error');
+  const historySection = document.getElementById('historySection');
+  const historyList = document.getElementById('historyList');
 
   const DAILY_LIMIT = 10;
   const STORAGE_KEY = 'patchwork_usage';
+  const HISTORY_KEY = 'patchwork_history';
+  const HISTORY_MAX = 5;
+
+  let mode = 'fix'; // 'fix' | 'explain'
+  let lastOriginalCode = '';
+  let lastFixedCode = '';
+
+  // Maps the dropdown's language label to the Prism language class it needs
+  const PRISM_LANG_MAP = {
+    'Python': 'python',
+    'JavaScript': 'javascript',
+    'TypeScript': 'typescript',
+    'Java': 'java',
+    'C++': 'cpp',
+    'C': 'c',
+    'Go': 'go',
+    'Rust': 'rust',
+    'Ruby': 'ruby',
+    'PHP': 'php',
+    'SQL': 'sql',
+    'Other / not sure': 'markup'
+  };
 
   function todayKey() {
     const d = new Date();
@@ -488,7 +909,12 @@
 
   function renderQuota() {
     const left = remaining();
-    quotaDisplay.innerHTML = `<strong>${left}</strong> / ${DAILY_LIMIT} fixes left today`;
+    const used = DAILY_LIMIT - left;
+    let dots = '';
+    for (let i = 0; i < DAILY_LIMIT; i++) {
+      dots += `<span class="${i < used ? 'filled' : ''}"></span>`;
+    }
+    quotaDisplay.innerHTML = `<span class="quota-dots">${dots}</span><span>${left} left today</span>`;
     if (left <= 0) {
       runBtn.disabled = true;
     }
@@ -507,6 +933,196 @@
       .join('');
   }
 
+  /* ---------- MODE TOGGLE (fix vs explain-only) ---------- */
+  function setMode(newMode) {
+    mode = newMode;
+    if (mode === 'fix') {
+      modeFixBtn.classList.add('active');
+      modeExplainBtn.classList.remove('active');
+      runBtn.textContent = 'Fix my code';
+    } else {
+      modeExplainBtn.classList.add('active');
+      modeFixBtn.classList.remove('active');
+      runBtn.textContent = 'Explain the error';
+    }
+  }
+
+  modeFixBtn.addEventListener('click', () => setMode('fix'));
+  modeExplainBtn.addEventListener('click', () => setMode('explain'));
+
+  /* ---------- DIFF VIEW ---------- */
+  // Simple line-based LCS diff — good enough for short/medium code snippets.
+  function computeDiff(oldText, newText) {
+    const oldLines = oldText.split('\n');
+    const newLines = newText.split('\n');
+    const n = oldLines.length, m = newLines.length;
+
+    // LCS table
+    const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+    for (let i = n - 1; i >= 0; i--) {
+      for (let j = m - 1; j >= 0; j--) {
+        if (oldLines[i] === newLines[j]) {
+          dp[i][j] = dp[i + 1][j + 1] + 1;
+        } else {
+          dp[i][j] = Math.max(dp[i + 1][j], dp[i][j + 1]);
+        }
+      }
+    }
+
+    const ops = [];
+    let i = 0, j = 0;
+    while (i < n && j < m) {
+      if (oldLines[i] === newLines[j]) {
+        ops.push({ type: 'same', line: oldLines[i] });
+        i++; j++;
+      } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+        ops.push({ type: 'removed', line: oldLines[i] });
+        i++;
+      } else {
+        ops.push({ type: 'added', line: newLines[j] });
+        j++;
+      }
+    }
+    while (i < n) { ops.push({ type: 'removed', line: oldLines[i] }); i++; }
+    while (j < m) { ops.push({ type: 'added', line: newLines[j] }); j++; }
+
+    return ops;
+  }
+
+  function renderDiff(oldText, newText) {
+    const ops = computeDiff(oldText, newText);
+    diffOut.innerHTML = ops.map(op => {
+      const safe = escapeHtml(op.line) || ' ';
+      return `<span class="diff-line ${op.type}">${safe}</span>`;
+    }).join('');
+  }
+
+  function showFixedView() {
+    viewFixedBtn.classList.add('active');
+    viewDiffBtn.classList.remove('active');
+    codeOutWrap.classList.remove('hidden-pane');
+    diffOut.classList.remove('visible');
+  }
+
+  function showDiffView() {
+    viewDiffBtn.classList.add('active');
+    viewFixedBtn.classList.remove('active');
+    codeOutWrap.classList.add('hidden-pane');
+    diffOut.classList.add('visible');
+  }
+
+  viewFixedBtn.addEventListener('click', showFixedView);
+  viewDiffBtn.addEventListener('click', showDiffView);
+
+  /* ---------- HISTORY ---------- */
+  function getHistory() {
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveToHistory(entry) {
+    try {
+      const list = getHistory();
+      list.unshift(entry);
+      const trimmed = list.slice(0, HISTORY_MAX);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(trimmed));
+      renderHistory();
+    } catch (e) {
+      // localStorage unavailable - history just won't persist
+    }
+  }
+
+  function timeAgo(ts) {
+    const diffMs = Date.now() - ts;
+    const mins = Math.round(diffMs / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.round(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.round(hours / 24);
+    return `${days}d ago`;
+  }
+
+  function renderHistory() {
+    const list = getHistory();
+    if (list.length === 0) {
+      historySection.style.display = 'none';
+      return;
+    }
+    historySection.style.display = 'flex';
+    historyList.innerHTML = list.map((entry, idx) => {
+      const snippet = escapeHtml(entry.code.slice(0, 60).replace(/\n/g, ' '));
+      return `
+        <div class="history-item" data-idx="${idx}">
+          <div class="h-meta">
+            <span class="h-lang">${escapeHtml(entry.lang)}</span>
+            <span class="h-snippet">${snippet}${entry.code.length > 60 ? '…' : ''}</span>
+          </div>
+          <span class="h-time">${timeAgo(entry.ts)}</span>
+        </div>
+      `;
+    }).join('');
+
+    historyList.querySelectorAll('.history-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const idx = parseInt(el.getAttribute('data-idx'), 10);
+        const entry = getHistory()[idx];
+        if (!entry) return;
+        loadHistoryEntry(entry);
+      });
+    });
+  }
+
+  function loadHistoryEntry(entry) {
+    langSelect.value = entry.lang;
+    codeInput.value = entry.code;
+    errorInput.value = entry.error || '';
+    setMode(entry.mode || 'fix');
+
+    if (entry.mode === 'explain') {
+      showExplainResult(entry.explanation);
+    } else {
+      showFixResult(entry.code, entry.fixedCode, entry.explanation, entry.lang);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* ---------- RESULT RENDERING ---------- */
+  function showFixResult(originalCode, fixedCode, explanationText, lang) {
+    result.classList.remove('explanation-only');
+    resultLabel.textContent = 'Fixed code';
+    viewToggle.style.display = 'flex';
+    copyBtn.style.display = 'inline-flex';
+
+    lastOriginalCode = originalCode;
+    lastFixedCode = fixedCode;
+
+    const prismLang = PRISM_LANG_MAP[lang] || 'markup';
+    codeOut.className = 'language-' + prismLang;
+    codeOut.textContent = fixedCode;
+    if (window.Prism) Prism.highlightElement(codeOut);
+
+    renderDiff(originalCode, fixedCode);
+    showFixedView();
+
+    explanation.innerHTML = simpleMarkdownToHtml(explanationText || '');
+    result.classList.add('visible');
+  }
+
+  function showExplainResult(explanationText) {
+    result.classList.add('explanation-only');
+    resultLabel.textContent = 'Explanation';
+    viewToggle.style.display = 'none';
+    copyBtn.style.display = 'none';
+
+    explanation.innerHTML = simpleMarkdownToHtml(explanationText || '');
+    result.classList.add('visible');
+  }
+
   copyBtn.addEventListener('click', () => {
     navigator.clipboard.writeText(codeOut.textContent).then(() => {
       copyBtn.textContent = 'Copied';
@@ -515,9 +1131,9 @@
   });
 
   runBtn.addEventListener('click', async () => {
-    const lang = document.getElementById('lang').value;
-    const code = document.getElementById('code').value.trim();
-    const error = document.getElementById('error').value.trim();
+    const lang = langSelect.value;
+    const code = codeInput.value.trim();
+    const error = errorInput.value.trim();
 
     errorBox.classList.remove('visible');
     result.classList.remove('visible');
@@ -536,13 +1152,13 @@
 
     runBtn.disabled = true;
     status.style.display = 'flex';
-    statusText.textContent = 'Analyzing and fixing...';
+    statusText.textContent = mode === 'explain' ? 'Diagnosing...' : 'Analyzing and fixing...';
 
     try {
       const response = await fetch("/api/fix", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lang, code, error })
+        body: JSON.stringify({ lang, code, error, mode })
       });
 
       const parsed = await response.json();
@@ -556,9 +1172,26 @@
       setUsage(usage);
       renderQuota();
 
-      codeOut.textContent = parsed.fixedCode || '(no code returned)';
-      explanation.innerHTML = simpleMarkdownToHtml(parsed.explanation || '');
-      result.classList.add('visible');
+      if (mode === 'explain') {
+        const explanationText = parsed.explanation || '(no explanation returned)';
+        showExplainResult(explanationText);
+        saveToHistory({
+          ts: Date.now(),
+          lang, code, error, mode,
+          fixedCode: '',
+          explanation: explanationText
+        });
+      } else {
+        const fixedCode = parsed.fixedCode || '(no code returned)';
+        const explanationText = parsed.explanation || '';
+        showFixResult(code, fixedCode, explanationText, lang);
+        saveToHistory({
+          ts: Date.now(),
+          lang, code, error, mode,
+          fixedCode,
+          explanation: explanationText
+        });
+      }
 
     } catch (err) {
       errorBox.textContent = 'Something went wrong: ' + err.message + '. Try again, or simplify the input.';
@@ -571,7 +1204,18 @@
     }
   });
 
+  // Keyboard shortcut: Cmd/Ctrl + Enter runs the fix from either textarea
+  [codeInput, errorInput].forEach(el => {
+    el.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (!runBtn.disabled) runBtn.click();
+      }
+    });
+  });
+
   renderQuota();
+  renderHistory();
 </script>
 
 </body>
