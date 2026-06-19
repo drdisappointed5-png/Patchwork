@@ -1,34 +1,39 @@
-// api/fix.js
-// Vercel serverless function — proxies requests to the Anthropic API
-// using a secret API key stored as an environment variable.
-
 export default async function handler(req, res) {
-  // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { lang, code, error } = req.body || {};
+  const { lang, code, error, mode } = req.body || {};
 
   if (!code || typeof code !== 'string') {
     return res.status(400).json({ error: 'Missing "code" in request body' });
   }
 
-  const systemPrompt = `You are a code-fixing assistant. The user will give you ${lang || 'code'} and (optionally) an error message or traceback it produced. Your job:
+  const isExplainOnly = mode === 'explain';
 
-1. Identify the bug(s) causing the error (or, if no error is given, identify any bugs you can find).
+  const systemPrompt = isExplainOnly
+    ? `You are a code debugging assistant. The user will give you ${lang || 'code'} and (optionally) an error message. Your job is to explain what is wrong with the code in plain language — do NOT return a fixed version.
+
+Respond ONLY with a JSON object in this exact shape:
+{"explanation": "..."}
+
+- "explanation" should be 2-4 short paragraphs in plain text (you may use \`backticks\` for inline code references). No markdown headers or bullet lists.`
+
+    : `You are a code-fixing assistant. The user will give you ${lang || 'code'} and (optionally) an error message or traceback. Your job:
+
+1. Identify the bug(s) causing the error.
 2. Produce a corrected, complete version of the code.
 3. Briefly explain what was wrong and what you changed.
 
-Respond ONLY with a JSON object, no markdown fences, no preamble, in this exact shape:
+Respond ONLY with a JSON object in this exact shape:
 {"fixedCode": "...", "explanation": "..."}
 
-- "fixedCode" must be the full corrected code as a plain string (use \\n for newlines), ready to drop in as a replacement for the original.
-- "explanation" should be 2-4 short paragraphs in plain text (you may use \`backticks\` for inline code references), written for someone reading the result in a simple text panel - not markdown headers or bullet lists.
+- "fixedCode" must be the full corrected code as a plain string (use \\n for newlines).
+- "explanation" should be 2-4 short paragraphs in plain text (you may use \`backticks\` for inline code). No markdown headers or bullet lists.
 - If the code looks correct and you can't find a bug, say so in the explanation and return the code unchanged in "fixedCode".`;
 
   const userContent = `Language: ${lang || 'unspecified'}\n\nCode:\n${code}\n\n${
-    error ? `Error/traceback:\n${error}` : "No error message was provided - please look for bugs yourself."
+    error ? `Error/traceback:\n${error}` : 'No error message provided — please look for bugs yourself.'
   }`;
 
   try {
@@ -71,8 +76,6 @@ Respond ONLY with a JSON object, no markdown fences, no preamble, in this exact 
     try {
       parsed = JSON.parse(cleaned);
     } catch (e) {
-      // Fallback: try to extract the outermost {...} block in case
-      // the model added stray text before/after the JSON object.
       const firstBrace = cleaned.indexOf('{');
       const lastBrace = cleaned.lastIndexOf('}');
       if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
