@@ -1,8 +1,8 @@
 {
   "name": "patchwork",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Paste broken code and an error message, get a fix from Claude.",
+  "description": "Fill in a new client's details and get a contract and invoice back, drafted by Claude.",
   "engines": {
     "node": ">=18.0.0"
   }
