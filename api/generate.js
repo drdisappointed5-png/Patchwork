@@ -104,7 +104,7 @@ Additional notes: ${notes || 'none'}`;
     if (!response.ok) {
       const errText = await response.text();
       console.error('Anthropic API error:', response.status, errText);
-      return res.status(502).json({ error: `Anthropic API error (${response.status})` });
+      return res.status(502).json({ error: `Anthropic API error (${response.status}): ${errText}` });
     }
 
     const data = await response.json();
