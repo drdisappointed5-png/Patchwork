@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>You're in — Patchwork</title>
+<meta name="robots" content="noindex" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+  :root {
+    --paper: #FBF9F4;
+    --card: #F3EEE0;
+    --card-line: #DCD4BE;
+    --ink: #1B2430;
+    --ink-soft: #5B6472;
+    --ledger: #2F5233;
+    --ledger-dark: #234027;
+    --stamp: #B23A3A;
+    --radius: 4px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .card {
+    max-width: 460px;
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--card-line);
+    border-radius: var(--radius);
+    padding: 34px 28px;
+    text-align: center;
+  }
+
+  h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+  }
+
+  p {
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    margin-bottom: 22px;
+    line-height: 1.6;
+  }
+
+  .code-box {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.35rem;
+    font-weight: 600;
+    background: var(--paper);
+    border: 1.5px dashed var(--ledger);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 16px;
+    letter-spacing: 0.04em;
+    color: var(--ledger-dark);
+    word-break: break-all;
+  }
+
+  .loading {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    padding: 20px 0;
+  }
+
+  .error-text { color: var(--stamp); font-size: 0.88rem; }
+
+  button {
+    font-family: 'IBM Plex Mono', monospace;
+    background: var(--ledger);
+    color: var(--paper);
+    border: none;
+    padding: 12px 22px;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  button:hover { background: var(--ledger-dark); }
+
+  a.back {
+    display: inline-block;
+    margin-top: 20px;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>You're in.</h1>
+    <p>Here's your access code — save it. You'll paste it into Patchwork to unlock 50 drafts a day.</p>
+    <div id="result">
+      <div class="loading">Finalizing your subscription…</div>
+    </div>
+    <a class="back" href="/">← Back to Patchwork</a>
+  </div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const sessionId = params.get('session_id');
+  const result = document.getElementById('result');
+
+  function showCode(code) {
+    result.innerHTML = `
+      <div class="code-box">${code}</div>
+      <button id="copyBtn">Copy code</button>
+    `;
+    document.getElementById('copyBtn').addEventListener('click', function () {
+      navigator.clipboard.writeText(code).then(() => {
+        this.textContent = 'Copied';
+        setTimeout(() => { this.textContent = 'Copy code'; }, 1500);
+      });
+    });
+  }
+
+  if (!sessionId) {
+    result.innerHTML = '<p class="error-text">No session found. If you just paid, check your email receipt from Stripe or try refreshing.</p>';
+  } else {
+    let attempts = 0;
+    const maxAttempts = 12;
+
+    const poll = async () => {
+      attempts++;
+      try {
+        const res = await fetch('/api/check-code?session_id=' + encodeURIComponent(sessionId));
+        const data = await res.json();
+        if (data.ready) {
+          showCode(data.code);
+          return;
+        }
+      } catch (e) {
+        // keep polling
+      }
+
+      if (attempts < maxAttempts) {
+        setTimeout(poll, 2000);
+      } else {
+        result.innerHTML = '<p class="error-text">Still processing — refresh this page in a moment.</p>';
+      }
+    };
+
+    poll();
+  }
+</script>
+</body>
+</html>
