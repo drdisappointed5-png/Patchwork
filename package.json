@@ -1,9 +1,12 @@
 {
   "name": "patchwork",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
-  "description": "Fill in a new client's details and get a contract and invoice back, drafted by Claude.",
+  "description": "Fill in a new client's details and get a contract and invoice back, drafted by Claude. Includes a paid tier for a higher daily limit.",
   "engines": {
     "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "stripe": "^17.0.0"
   }
 }
