@@ -507,7 +507,8 @@
     </div>
     <p class="note">
       Drafts are a starting point, not legal advice — have a professional review anything high-stakes.
-      Each browser gets <span class="usage-note">10 drafts / day</span>, resetting at midnight.
+      Each browser gets <span class="usage-note" id="limitNote">10 drafts / day</span>, resetting at midnight.
+      Need more? <a href="#upgrade" id="upgradeLink">Upgrade to 50/day →</a>
     </p>
   </div>
 
@@ -560,6 +561,22 @@
     <div class="hint" id="formHint">Fill in the required fields to draft the paperwork.</div>
   </div>
 
+  <div class="about-card" id="upgrade">
+    <h2 class="section-title">Upgrade</h2>
+    <p style="font-size:0.86rem; color:var(--ink-soft); line-height:1.6; margin:0;">
+      Subscribers get <strong style="color:var(--ink);">50 drafts a day</strong> instead of 10.
+      <a href="https://buy.stripe.com/REPLACE_WITH_YOUR_PAYMENT_LINK" target="_blank" rel="noopener">Subscribe →</a>
+    </p>
+    <div class="field" style="margin:14px 0 0;">
+      <label for="accessCode">Already subscribed? Enter your access code</label>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="accessCode" placeholder="e.g. ABCD-EFGH-JKMN" style="flex:1;">
+        <button class="run" id="unlockBtn" style="padding:10px 18px; flex-shrink:0;" onclick="unlockCode()">Unlock</button>
+      </div>
+      <div class="hint" id="unlockHint"></div>
+    </div>
+  </div>
+
   <div class="error-box" id="errorBox"></div>
 
   <section id="outputArea">
@@ -587,10 +604,31 @@
   const historySection = document.getElementById('historySection');
   const historyList = document.getElementById('historyList');
 
-  const DAILY_LIMIT = 10;
+  const FREE_LIMIT = 10;
+  const PREMIUM_LIMIT = 50;
   const STORAGE_KEY = 'patchwork_usage';
   const HISTORY_KEY = 'patchwork_history';
   const HISTORY_MAX = 5;
+  const CODE_KEY = 'patchwork_access_code';
+
+  function getAccessCode() {
+    try { return localStorage.getItem(CODE_KEY) || ''; } catch (e) { return ''; }
+  }
+
+  function currentLimit() {
+    return getAccessCode() ? PREMIUM_LIMIT : FREE_LIMIT;
+  }
+
+  function unlockCode() {
+    const input = document.getElementById('accessCode');
+    const code = input.value.trim();
+    const hint = document.getElementById('unlockHint');
+    if (!code) { hint.textContent = 'Enter your access code first.'; return; }
+    try { localStorage.setItem(CODE_KEY, code); } catch (e) {}
+    hint.textContent = 'Saved — your next draft will use the 50/day limit if the code is valid.';
+    renderQuota();
+    checkRequired();
+  }
 
   function todayKey() {
     const d = new Date();
@@ -612,16 +650,27 @@
   }
 
   function remaining() {
-    return Math.max(0, DAILY_LIMIT - getUsage().count);
+    return Math.max(0, currentLimit() - getUsage().count);
   }
 
   function renderQuota() {
+    const limit = currentLimit();
     const left = remaining();
-    const used = DAILY_LIMIT - left;
-    let dots = '';
-    for (let i = 0; i < DAILY_LIMIT; i++) dots += `<span class="${i < used ? 'filled' : ''}"></span>`;
-    quotaDisplay.innerHTML = `<span class="quota-dots">${dots}</span><span>${left} left today</span>`;
+    const used = limit - left;
+
+    if (limit <= FREE_LIMIT) {
+      let dots = '';
+      for (let i = 0; i < limit; i++) dots += `<span class="${i < used ? 'filled' : ''}"></span>`;
+      quotaDisplay.innerHTML = `<span class="quota-dots">${dots}</span><span>${left} left today</span>`;
+    } else {
+      quotaDisplay.innerHTML = `<span style="color:var(--ledger-dark); font-weight:600;">★ premium</span><span>${left} left today</span>`;
+    }
     if (left <= 0) runBtn.disabled = true;
+
+    const limitNote = document.getElementById('limitNote');
+    if (limitNote) limitNote.textContent = `${limit} drafts / day`;
+    const upgradeLink = document.getElementById('upgradeLink');
+    if (upgradeLink) upgradeLink.style.display = getAccessCode() ? 'none' : 'inline';
   }
 
   function checkRequired() {
@@ -703,9 +752,13 @@
     outputArea.innerHTML = `<div class="loading"><span>Drafting your paperwork</span><span class="cursor"></span></div>`;
 
     try {
+      const codeHeader = getAccessCode();
       const response = await fetch("/api/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: Object.assign(
+          { "Content-Type": "application/json" },
+          codeHeader ? { "x-access-code": codeHeader } : {}
+        ),
         body: JSON.stringify(data)
       });
 
@@ -788,6 +841,12 @@
       }
     });
   });
+
+  const storedCode = getAccessCode();
+  if (storedCode) {
+    const codeInput = document.getElementById('accessCode');
+    if (codeInput) codeInput.value = storedCode;
+  }
 
   renderQuota();
   renderHistory();
