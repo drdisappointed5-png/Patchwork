@@ -1,15 +1,15 @@
 // api/generate.js
-// Vercel serverless function with server-side IP rate limiting (10 req/day/IP)
+// Vercel serverless function with two-tier rate limiting, backed by Upstash Redis:
+// - Free tier: 10 drafts/day per IP
+// - Premium tier: 50 drafts/day per access code (unlocked via Stripe subscription)
 //
-// NOTE: the rate-limit store below is in-memory (a Map) and resets whenever
-// the function cold-starts, which can happen often on Vercel. This is the
-// same limitation the previous version of this file had — it's a soft limit,
-// not a hard guarantee. For a daily cap that survives cold starts, swap this
-// Map for Vercel KV or Upstash Redis.
+// Requires these Vercel environment variables:
+//   UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
+// If these aren't set, rate limiting fails open (requests are allowed) so the
+// free tier doesn't break before Redis is configured — see checkAndIncrement below.
 
-const ipStore = new Map();
-
-const DAILY_LIMIT = 10;
+const FREE_LIMIT = 10;
+const PREMIUM_LIMIT = 50;
 
 function getTodayKey() {
   const d = new Date();
@@ -22,22 +22,36 @@ function getClientIp(req) {
   return req.socket?.remoteAddress || 'unknown';
 }
 
-function checkRateLimit(ip) {
-  const today = getTodayKey();
-  const key = `${ip}::${today}`;
+async function redisCmd(...parts) {
+  const url = `${process.env.UPSTASH_REDIS_REST_URL}/${parts.map(encodeURIComponent).join('/')}`;
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}` },
+  });
+  const data = await response.json();
+  return data.result;
+}
 
-  if (!ipStore.has(key)) {
-    for (const k of ipStore.keys()) {
-      if (!k.endsWith(today)) ipStore.delete(k);
+async function checkAndIncrement(key, limit) {
+  try {
+    const count = await redisCmd('incr', key);
+    if (count === 1) {
+      await redisCmd('expire', key, 86400);
     }
-    ipStore.set(key, 0);
+    return count <= limit;
+  } catch (err) {
+    console.error('Redis rate-limit check failed, allowing request:', err.message);
+    return true; // fail open — don't block real users if Redis has a hiccup
   }
+}
 
-  const count = ipStore.get(key);
-  if (count >= DAILY_LIMIT) return false;
-
-  ipStore.set(key, count + 1);
-  return true;
+async function getAccessInfo(code) {
+  try {
+    const raw = await redisCmd('get', `access:${code}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch (err) {
+    console.error('Redis access-code check failed, treating as free tier:', err.message);
+    return null; // fail closed — don't grant premium if we can't verify it
+  }
 }
 
 export default async function handler(req, res) {
@@ -45,11 +59,30 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // --- IP RATE LIMIT CHECK ---
-  const ip = getClientIp(req);
-  if (!checkRateLimit(ip)) {
+  // --- RATE LIMIT CHECK (free tier by IP, premium tier by access code) ---
+  const today = getTodayKey();
+  const accessCode = req.headers['x-access-code'];
+  let tier = 'free';
+  let allowed;
+
+  if (accessCode) {
+    const access = await getAccessInfo(accessCode);
+    if (access && access.active) {
+      tier = 'premium';
+      allowed = await checkAndIncrement(`ratelimit:premium:${accessCode}:${today}`, PREMIUM_LIMIT);
+    }
+  }
+
+  if (tier === 'free') {
+    const ip = getClientIp(req);
+    allowed = await checkAndIncrement(`ratelimit:free:${ip}:${today}`, FREE_LIMIT);
+  }
+
+  if (!allowed) {
+    const limit = tier === 'premium' ? PREMIUM_LIMIT : FREE_LIMIT;
+    const upsell = tier === 'free' ? ' Upgrade for a higher daily limit, or' : '';
     return res.status(429).json({
-      error: 'Daily limit reached (10 drafts/day per IP). Try again tomorrow.'
+      error: `Daily limit reached (${limit}/day).${upsell} try again tomorrow.`
     });
   }
 
