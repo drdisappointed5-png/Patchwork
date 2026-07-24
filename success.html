@@ -113,14 +113,21 @@
   </div>
 
 <script>
-  const params = new URLSearchParams(window.location.search);
-  const sessionId = params.get('session_id');
+  const CODE_KEY = 'patchwork_access_code';
   const result = document.getElementById('result');
+
+  function getCode() {
+    try { return localStorage.getItem(CODE_KEY) || ''; } catch (e) { return ''; }
+  }
 
   function showCode(code) {
     result.innerHTML = `
       <div class="code-box">${code}</div>
       <button id="copyBtn">Copy code</button>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin-top:14px;">
+        This code is already saved on this device — you're all set.
+        Copy it if you want to use Patchwork on another device too.
+      </p>
     `;
     document.getElementById('copyBtn').addEventListener('click', function () {
       navigator.clipboard.writeText(code).then(() => {
@@ -130,8 +137,10 @@
     });
   }
 
-  if (!sessionId) {
-    result.innerHTML = '<p class="error-text">No session found. If you just paid, check your email receipt from Stripe or try refreshing.</p>';
+  const code = getCode();
+
+  if (!code) {
+    result.innerHTML = '<p class="error-text">No pending checkout found on this device. If you just paid, check your email receipt from Lemon Squeezy.</p>';
   } else {
     let attempts = 0;
     const maxAttempts = 12;
@@ -139,10 +148,10 @@
     const poll = async () => {
       attempts++;
       try {
-        const res = await fetch('/api/check-code?session_id=' + encodeURIComponent(sessionId));
+        const res = await fetch('/api/check-code?code=' + encodeURIComponent(code));
         const data = await res.json();
         if (data.ready) {
-          showCode(data.code);
+          showCode(code);
           return;
         }
       } catch (e) {
