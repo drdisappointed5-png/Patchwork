@@ -565,7 +565,7 @@
     <h2 class="section-title">Upgrade</h2>
     <p style="font-size:0.86rem; color:var(--ink-soft); line-height:1.6; margin:0;">
       Subscribers get <strong style="color:var(--ink);">50 drafts a day</strong> instead of 10.
-      <a href="https://buy.stripe.com/REPLACE_WITH_YOUR_PAYMENT_LINK" target="_blank" rel="noopener">Subscribe →</a>
+      <button onclick="subscribeNow()" style="background:none;border:none;padding:0;font:inherit;color:var(--ledger-dark);text-decoration:underline;cursor:pointer;">Subscribe →</button>
     </p>
     <div class="field" style="margin:14px 0 0;">
       <label for="accessCode">Already subscribed? Enter your access code</label>
@@ -628,6 +628,19 @@
     hint.textContent = 'Saved — your next draft will use the 50/day limit if the code is valid.';
     renderQuota();
     checkRequired();
+  }
+
+  async function subscribeNow() {
+    const hint = document.getElementById('unlockHint');
+    try {
+      const res = await fetch('/api/start-checkout', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok || !data.checkoutUrl) throw new Error(data.error || 'Could not start checkout');
+      try { localStorage.setItem(CODE_KEY, data.code); } catch (e) {}
+      window.location.href = data.checkoutUrl;
+    } catch (err) {
+      if (hint) hint.textContent = "Couldn't start checkout: " + err.message;
+    }
   }
 
   function todayKey() {
