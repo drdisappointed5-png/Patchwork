@@ -49,7 +49,8 @@ export default async function handler(req, res) {
     }));
 
     const separator = baseUrl.includes('?') ? '&' : '?';
-    const checkoutUrl = `${baseUrl}${separator}checkout[custom][code]=${encodeURIComponent(code)}`;
+    const redirectUrl = 'https://patchwork-rho.vercel.app/success.html';
+    const checkoutUrl = `${baseUrl}${separator}checkout[custom][code]=${encodeURIComponent(code)}&checkout[redirect_url]=${encodeURIComponent(redirectUrl)}`;
 
     return res.status(200).json({ code, checkoutUrl });
   } catch (err) {
