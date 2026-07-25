@@ -1,7 +1,6 @@
 // api/check-code.js
-// Called by success.html after a Stripe Checkout redirect. Given a
-// checkout session id, returns the access code once the stripe-webhook
-// handler has generated it (usually within a couple seconds of payment).
+// Called by success.html after checkout. Given an access code, reports
+// whether the webhook has activated it yet.
 //
 // Requires: UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
 
@@ -15,18 +14,19 @@ async function redisCmd(...parts) {
 }
 
 export default async function handler(req, res) {
-  const sessionId = req.query.session_id;
+  const code = req.query.code;
 
-  if (!sessionId || typeof sessionId !== 'string') {
-    return res.status(400).json({ error: 'Missing session_id' });
+  if (!code || typeof code !== 'string') {
+    return res.status(400).json({ error: 'Missing code' });
   }
 
   try {
-    const code = await redisCmd('get', `session:${sessionId}`);
-    if (!code) {
+    const raw = await redisCmd('get', `access:${code}`);
+    if (!raw) {
       return res.status(200).json({ ready: false });
     }
-    return res.status(200).json({ ready: true, code });
+    const access = JSON.parse(raw);
+    return res.status(200).json({ ready: !!access.active });
   } catch (err) {
     console.error('check-code error:', err.message);
     return res.status(500).json({ error: 'Could not check status' });
