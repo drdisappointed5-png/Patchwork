@@ -1,15 +1,12 @@
 // api/start-checkout.js
-// Generates a fresh access code, stores it as "pending" (inactive) in Redis,
-// and returns a Lemon Squeezy checkout URL with that code attached as custom
-// data. The webhook (lemonsqueezy-webhook.js) activates the code once
-// payment actually succeeds.
+// Creates a Lemon Squeezy checkout via their API (not a static hosted link),
+// which is the only way to set a real post-payment redirect_url. Also
+// generates a fresh access code, stores it as "pending" in Redis, and
+// attaches it to the checkout as custom data so the webhook can activate it.
 //
 // Requires these Vercel environment variables:
-//   UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN, LEMONSQUEEZY_CHECKOUT_URL
-//
-// LEMONSQUEEZY_CHECKOUT_URL should be the base "Buy" link for your
-// subscription product/variant, e.g.
-//   https://yourstore.lemonsqueezy.com/buy/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+//   UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN,
+//   LEMONSQUEEZY_API_KEY, LEMONSQUEEZY_STORE_ID, LEMONSQUEEZY_VARIANT_ID
 
 async function redisCmd(...parts) {
   const url = `${process.env.UPSTASH_REDIS_REST_URL}/${parts.map(encodeURIComponent).join('/')}`;
@@ -35,8 +32,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const baseUrl = process.env.LEMONSQUEEZY_CHECKOUT_URL;
-  if (!baseUrl) {
+  const { LEMONSQUEEZY_API_KEY, LEMONSQUEEZY_STORE_ID, LEMONSQUEEZY_VARIANT_ID } = process.env;
+  if (!LEMONSQUEEZY_API_KEY || !LEMONSQUEEZY_STORE_ID || !LEMONSQUEEZY_VARIANT_ID) {
     return res.status(500).json({ error: 'Checkout is not configured yet.' });
   }
 
@@ -48,9 +45,40 @@ export default async function handler(req, res) {
       createdAt: Date.now(),
     }));
 
-    const separator = baseUrl.includes('?') ? '&' : '?';
-    const redirectUrl = 'https://patchwork-rho.vercel.app/success.html';
-    const checkoutUrl = `${baseUrl}${separator}checkout[custom][code]=${encodeURIComponent(code)}&checkout[redirect_url]=${encodeURIComponent(redirectUrl)}`;
+    const lsResponse = await fetch('https://api.lemonsqueezy.com/v1/checkouts', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${LEMONSQUEEZY_API_KEY}`,
+        'Content-Type': 'application/vnd.api+json',
+        Accept: 'application/vnd.api+json',
+      },
+      body: JSON.stringify({
+        data: {
+          type: 'checkouts',
+          attributes: {
+            product_options: {
+              redirect_url: 'https://patchwork-rho.vercel.app/success.html',
+            },
+            checkout_data: {
+              custom: { code },
+            },
+          },
+          relationships: {
+            store: { data: { type: 'stores', id: String(LEMONSQUEEZY_STORE_ID) } },
+            variant: { data: { type: 'variants', id: String(LEMONSQUEEZY_VARIANT_ID) } },
+          },
+        },
+      }),
+    });
+
+    if (!lsResponse.ok) {
+      const errText = await lsResponse.text();
+      console.error('Lemon Squeezy checkout creation failed:', lsResponse.status, errText);
+      return res.status(502).json({ error: `Could not create checkout (${lsResponse.status})` });
+    }
+
+    const lsData = await lsResponse.json();
+    const checkoutUrl = lsData.data.attributes.url;
 
     return res.status(200).json({ code, checkoutUrl });
   } catch (err) {
