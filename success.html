@@ -117,6 +117,17 @@
   const result = document.getElementById('result');
 
   function getCode() {
+    // Primary source: the ?code= param Lemon Squeezy redirects back with.
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = params.get('code');
+      if (fromUrl) {
+        localStorage.setItem(CODE_KEY, fromUrl);
+        return fromUrl;
+      }
+    } catch (e) { /* ignore */ }
+
+    // Fallback: a code saved earlier on this device (e.g. page refresh).
     try { return localStorage.getItem(CODE_KEY) || ''; } catch (e) { return ''; }
   }
 
