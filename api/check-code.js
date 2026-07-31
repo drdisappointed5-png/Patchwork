@@ -1,6 +1,7 @@
 // api/check-code.js
-// Called by success.html after checkout. Given an access code, reports
-// whether the webhook has activated it yet.
+// Called by success.html after checkout. Given the access code (passed back
+// via the redirect_url query string from start-checkout.js), reports whether
+// the Lemon Squeezy webhook has activated it yet.
 //
 // Requires: UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
 
