@@ -4,6 +4,9 @@
 // generates a fresh access code, stores it as "pending" in Redis, and
 // attaches it to the checkout as custom data so the webhook can activate it.
 //
+// The access code is also appended to the redirect_url as a query param so
+// success.html knows which code to poll for after Lemon Squeezy redirects back.
+//
 // Requires these Vercel environment variables:
 //   UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN,
 //   LEMONSQUEEZY_API_KEY, LEMONSQUEEZY_STORE_ID, LEMONSQUEEZY_VARIANT_ID
@@ -57,7 +60,7 @@ export default async function handler(req, res) {
           type: 'checkouts',
           attributes: {
             product_options: {
-              redirect_url: 'https://patchwork-rho.vercel.app/success.html',
+              redirect_url: `https://patchwork-rho.vercel.app/success.html?code=${code}`,
             },
             checkout_data: {
               custom: { code },
