@@ -1,6 +1,6 @@
 {
   "name": "patchwork",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "private": true,
   "description": "Fill in a new client's details and get a contract and invoice back, drafted by Claude. Includes a paid tier for a higher daily limit via Lemon Squeezy.",
   "engines": {
