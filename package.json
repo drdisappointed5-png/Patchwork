@@ -1,8 +1,8 @@
 {
   "name": "patchwork",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "private": true,
-  "description": "Fill in a new client's details and get a contract and invoice back, drafted by Claude. Includes a paid tier for a higher daily limit via Lemon Squeezy.",
+  "description": "Fill in a new client's details and get a contract and invoice back, drafted by Claude. Includes a paid tier for a higher daily limit via Lemon Squeezy, with email backup of access codes via Resend.",
   "engines": {
     "node": ">=18.0.0"
   }
