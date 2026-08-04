@@ -94,6 +94,26 @@
 
   button:hover { background: var(--ledger-dark); }
 
+  .copy-fallback {
+    display: none;
+    width: 100%;
+    margin-top: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 8px;
+    border: 1px solid var(--card-line);
+    border-radius: var(--radius);
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .copy-fallback.visible { display: block; }
+
+  .email-note {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin-top: 14px;
+  }
+
   a.back {
     display: inline-block;
     margin-top: 20px;
@@ -135,16 +155,55 @@
     result.innerHTML = `
       <div class="code-box">${code}</div>
       <button id="copyBtn">Copy code</button>
+      <textarea class="copy-fallback" id="copyFallback" readonly></textarea>
       <p style="font-size:12.5px;color:var(--ink-soft);margin-top:14px;">
         This code is already saved on this device — you're all set.
         Copy it if you want to use Patchwork on another device too.
       </p>
+      <p class="email-note">We've also emailed this code to you as a backup, in case you lose access to this device.</p>
     `;
-    document.getElementById('copyBtn').addEventListener('click', function () {
-      navigator.clipboard.writeText(code).then(() => {
-        this.textContent = 'Copied';
-        setTimeout(() => { this.textContent = 'Copy code'; }, 1500);
-      });
+
+    const copyBtn = document.getElementById('copyBtn');
+    const fallbackBox = document.getElementById('copyFallback');
+    const originalLabel = copyBtn.textContent;
+
+    copyBtn.addEventListener('click', function () {
+      const resetLabel = () => setTimeout(() => { copyBtn.textContent = originalLabel; }, 1500);
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(code).then(() => {
+          copyBtn.textContent = 'Copied';
+          resetLabel();
+        }).catch(() => fallbackCopy());
+      } else {
+        fallbackCopy();
+      }
+
+      function fallbackCopy() {
+        const tempTa = document.createElement('textarea');
+        tempTa.value = code;
+        tempTa.style.position = 'fixed';
+        tempTa.style.opacity = '0';
+        document.body.appendChild(tempTa);
+        tempTa.focus();
+        tempTa.select();
+        let succeeded = false;
+        try { succeeded = document.execCommand('copy'); } catch (e) { succeeded = false; }
+        document.body.removeChild(tempTa);
+
+        if (succeeded) {
+          copyBtn.textContent = 'Copied';
+          resetLabel();
+          return;
+        }
+
+        fallbackBox.value = code;
+        fallbackBox.classList.add('visible');
+        fallbackBox.focus();
+        fallbackBox.select();
+        copyBtn.textContent = 'Select text below to copy';
+        resetLabel();
+      }
     });
   }
 
