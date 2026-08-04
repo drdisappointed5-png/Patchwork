@@ -1,7 +1,7 @@
 // api/generate.js
 // Vercel serverless function with two-tier rate limiting, backed by Upstash Redis:
-// - Free tier: 10 drafts/day per IP
-// - Premium tier: 50 drafts/day per access code (unlocked via Stripe subscription)
+// - Free tier: 10 drafts/day per IP (+ per-browser client id, to reduce shared-IP collisions)
+// - Premium tier: 50 drafts/day per access code (unlocked via Lemon Squeezy subscription)
 //
 // Requires these Vercel environment variables:
 //   UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
@@ -59,34 +59,53 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // --- RATE LIMIT CHECK (free tier by IP, premium tier by access code) ---
+  // --- RATE LIMIT CHECK (free tier by IP+client id, premium tier by access code) ---
   const today = getTodayKey();
   const accessCode = req.headers['x-access-code'];
+  const clientId = req.headers['x-client-id']; // anonymous per-browser id, set by frontend, optional
   let tier = 'free';
+
+  // accountStatus tells the frontend what banner/messaging to show:
+  //   'premium' -> active subscriber
+  //   'expired' -> has a code, but it's no longer active (cancelled/lapsed)
+  //   'free'    -> no code at all
+  let accountStatus = 'free';
   let allowed;
 
   if (accessCode) {
     const access = await getAccessInfo(accessCode);
     if (access && access.active) {
       tier = 'premium';
+      accountStatus = 'premium';
       allowed = await checkAndIncrement(`ratelimit:premium:${accessCode}:${today}`, PREMIUM_LIMIT);
+    } else if (access && !access.active) {
+      // Code exists but subscription lapsed/cancelled — don't fail silently,
+      // fall through to free tier but tell the frontend so it can explain why.
+      accountStatus = 'expired';
     }
+    // If access is null (code never existed / invalid), accountStatus stays 'free'
+    // and we don't distinguish it from "never subscribed" — that's intentional,
+    // it avoids leaking whether a given code was ever valid.
   }
 
   if (tier === 'free') {
     const ip = getClientIp(req);
-    allowed = await checkAndIncrement(`ratelimit:free:${ip}:${today}`, FREE_LIMIT);
+    const rateLimitKey = clientId
+      ? `ratelimit:free:${ip}:${clientId}:${today}`
+      : `ratelimit:free:${ip}:${today}`;
+    allowed = await checkAndIncrement(rateLimitKey, FREE_LIMIT);
   }
 
   if (!allowed) {
     const limit = tier === 'premium' ? PREMIUM_LIMIT : FREE_LIMIT;
     const upsell = tier === 'free' ? ' Upgrade for a higher daily limit, or' : '';
     return res.status(429).json({
-      error: `Daily limit reached (${limit}/day).${upsell} try again tomorrow.`
+      error: `Daily limit reached (${limit}/day).${upsell} try again tomorrow.`,
+      accountStatus,
     });
   }
 
-  const { businessName, clientName, projectDesc, price, timeline, paymentTerms, notes } = req.body || {};
+  const { businessName, clientName, projectDesc, price, timeline, paymentTerms, notes, tone } = req.body || {};
 
   if (!businessName || typeof businessName !== 'string') {
     return res.status(400).json({ error: 'Missing "businessName" in request body' });
@@ -101,6 +120,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing "price" in request body' });
   }
 
+  const toneKey = tone === 'friendly' ? 'friendly' : 'formal';
+  const toneInstruction = toneKey === 'friendly'
+    ? 'Write in a warm, approachable, plain-spoken tone — like a friendly freelancer talking to a client they get along well with. Still complete and professional, just less stiff. Avoid legal jargon where a plain phrase works just as well.'
+    : 'Write in a standard, professional, formal business tone suitable for a traditional services contract and invoice.';
+
   const systemPrompt = `You are a paperwork assistant for freelancers and consultants. Based on the client engagement details the user provides, generate two documents: a services contract and an invoice.
 
 Respond ONLY with a JSON object in this exact shape:
@@ -108,7 +132,8 @@ Respond ONLY with a JSON object in this exact shape:
 
 - "contract" must be a complete, professional freelance services contract (300-450 words) covering: scope of work, payment terms, timeline, intellectual property/ownership transfer upon full payment, and a simple termination clause. Address it between the business and the client using the names given. Use \\n for line breaks between sections, plain text only — no markdown headers or bullet symbols.
 - "invoice" must be a simple, complete invoice (under 120 words) with an invoice number placeholder like INV-0001, a line item describing the work, the price, a payment due date or terms, and a placeholder line "Payment details: [add your payment info]". Use \\n for line breaks, plain text only.
-- If a detail is thin (e.g. no timeline given), use a reasonable freelance-industry default and mark it clearly as a placeholder in brackets rather than inventing specifics.`;
+- If a detail is thin (e.g. no timeline given), use a reasonable freelance-industry default and mark it clearly as a placeholder in brackets rather than inventing specifics.
+- Tone: ${toneInstruction}`;
 
   const userContent = `Freelancer/business name: ${businessName}
 Client name: ${clientName}
@@ -173,7 +198,7 @@ Additional notes: ${notes || 'none'}`;
       }
     }
 
-    return res.status(200).json(parsed);
+    return res.status(200).json({ ...parsed, accountStatus });
   } catch (err) {
     console.error('Server error:', err);
     return res.status(500).json({ error: 'Internal server error' });
