@@ -1,13 +1,17 @@
 // api/lemonsqueezy-webhook.js
 // Verifies the Lemon Squeezy webhook signature (using Node's built-in crypto
 // — no extra package needed) and activates/deactivates access codes in
-// Upstash Redis.
+// Upstash Redis. Also emails the customer a backup of their access code via
+// Resend, so losing localStorage (new device, cleared browser) doesn't lose
+// them their subscription.
 //
-// - subscription_created → activates the code passed in as custom data
-// - subscription_cancelled / subscription_expired → deactivates that code
+// - subscription_created → activates the code passed in as custom data, emails it
+// - subscription_cancelled / subscription_expired → deactivates that code, emails a notice
 //
 // Requires these Vercel environment variables:
 //   LEMONSQUEEZY_WEBHOOK_SECRET, UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
+//   RESEND_API_KEY (optional — if unset, emails are silently skipped, nothing else breaks)
+//   RESEND_FROM_EMAIL (optional — defaults to Resend's shared test sender)
 //
 // In the Lemon Squeezy dashboard, register this endpoint at:
 //   https://<your-domain>/api/lemonsqueezy-webhook
@@ -46,6 +50,55 @@ function verifySignature(rawBody, signatureHeader) {
   return crypto.timingSafeEqual(digest, signature);
 }
 
+// Fire-and-forget email helper. Never throws — a failed email should never
+// break webhook processing or cause Lemon Squeezy to retry unnecessarily.
+async function sendEmail(to, subject, html) {
+  if (!process.env.RESEND_API_KEY || !to) return;
+  try {
+    const resp = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: process.env.RESEND_FROM_EMAIL || 'Patchwork <onboarding@resend.dev>',
+        to,
+        subject,
+        html,
+      }),
+    });
+    if (!resp.ok) {
+      const errText = await resp.text();
+      console.error('Resend email failed:', resp.status, errText);
+    }
+  } catch (err) {
+    console.error('Resend email error:', err.message);
+  }
+}
+
+function accessCodeEmailHtml(code) {
+  return `
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+      <h2 style="color: #2F5233;">You're subscribed to Patchwork Premium</h2>
+      <p>Here's your access code — save this email in case you ever need it again:</p>
+      <p style="font-family: monospace; font-size: 20px; font-weight: 600; background: #F3EEE0; border: 1.5px dashed #2F5233; border-radius: 4px; padding: 16px; text-align: center; letter-spacing: 0.04em;">${code}</p>
+      <p>Paste this into Patchwork's "Enter your access code" box to unlock 50 drafts a day.</p>
+      <p style="color: #5B6472; font-size: 13px;">If you didn't subscribe to Patchwork, you can ignore this email.</p>
+    </div>
+  `;
+}
+
+function cancellationEmailHtml() {
+  return `
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+      <h2 style="color: #1B2430;">Your Patchwork Premium subscription has ended</h2>
+      <p>Your access code has been deactivated and your account is back on the free tier (10 drafts/day).</p>
+      <p>If this wasn't intentional, or you'd like to resubscribe, just head back to Patchwork and tap Subscribe again.</p>
+    </div>
+  `;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -68,6 +121,7 @@ export default async function handler(req, res) {
 
   const eventName = payload.meta?.event_name;
   const attributes = payload.data?.attributes || {};
+  const customerEmail = attributes.user_email || null;
 
   try {
     if (eventName === 'subscription_created') {
@@ -77,12 +131,16 @@ export default async function handler(req, res) {
           active: true,
           customerId: attributes.customer_id || null,
           subscriptionId: payload.data.id,
+          customerEmail,
           createdAt: Date.now(),
         }));
 
         if (attributes.customer_id) {
           await redisCmd('set', `customer:${attributes.customer_id}`, code);
         }
+
+        // Don't block the response on email — send it but don't await failure paths
+        await sendEmail(customerEmail, 'Your Patchwork access code', accessCodeEmailHtml(code));
       }
     }
 
@@ -96,6 +154,9 @@ export default async function handler(req, res) {
           const access = JSON.parse(raw);
           access.active = false;
           await redisCmd('set', `access:${code}`, JSON.stringify(access));
+
+          const emailTo = customerEmail || access.customerEmail;
+          await sendEmail(emailTo, 'Your Patchwork subscription has ended', cancellationEmailHtml());
         }
       }
     }
