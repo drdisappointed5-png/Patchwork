@@ -45,6 +45,8 @@
     --ledger-soft: rgba(47, 82, 51, 0.1);
     --stamp: #B23A3A;
     --stamp-soft: rgba(178, 58, 58, 0.08);
+    --warn: #9A6B1E;
+    --warn-soft: rgba(154, 107, 30, 0.1);
     --line: #C9C2B4;
     --radius: 4px;
   }
@@ -193,6 +195,20 @@
     display: inline-flex;
   }
 
+  /* ---------- EXPIRED BANNER ---------- */
+  .expired-banner {
+    display: none;
+    background: var(--warn-soft);
+    border: 1px solid rgba(154, 107, 30, 0.3);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    color: var(--warn);
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+  .expired-banner.visible { display: block; }
+  .expired-banner a { color: var(--warn); text-decoration: underline; font-weight: 600; }
+
   /* ---------- WORKBENCH ---------- */
   .workbench {
     border: 1px solid var(--card-line);
@@ -225,6 +241,25 @@
 
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   @media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
+
+  /* ---------- TONE SELECTOR ---------- */
+  .tone-field { margin-bottom: 16px; }
+  .tone-field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--ink); }
+  .tone-options { display: flex; gap: 10px; }
+  .tone-option {
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    background: var(--paper);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+  }
+  .tone-option input { margin: 0; accent-color: var(--ledger); }
+  .tone-option.selected { border-color: var(--ledger); background: var(--ledger-soft); }
 
   /* ---------- ACTIONS ---------- */
   .actions {
@@ -368,6 +403,20 @@
 
   .doc-actions button:hover { background: var(--ledger-soft); }
 
+  .copy-fallback {
+    display: none;
+    width: 100%;
+    margin-top: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .copy-fallback.visible { display: block; }
+
   .stamp {
     position: absolute;
     top: 18px;
@@ -444,6 +493,11 @@
   .history-item .h-snippet { color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .history-item .h-time { font-family: 'IBM Plex Mono', monospace; font-size: 0.74rem; color: var(--ink-soft); flex-shrink: 0; }
 
+  .history-note {
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
   .reset-link {
     display: inline-block;
     margin-top: 20px;
@@ -495,6 +549,11 @@
       Drop in a new client's name, project, and price. Patchwork sends the details to Claude
       and returns a professional contract and a matching invoice — ready to copy or save as a PDF.
     </p>
+  </div>
+
+  <div class="expired-banner" id="expiredBanner">
+    Your Patchwork Premium subscription isn't active anymore, so you're back on the free 10/day limit.
+    <a href="#upgrade" id="expiredResubLink">Resubscribe</a> any time to unlock 50/day again.
   </div>
 
   <div class="about-card">
@@ -551,6 +610,18 @@
       <textarea id="notes" placeholder="Optional — revisions included, kill fee, usage rights, etc."></textarea>
     </div>
 
+    <div class="tone-field">
+      <label>Tone</label>
+      <div class="tone-options">
+        <label class="tone-option selected" id="toneFormalLabel">
+          <input type="radio" name="tone" value="formal" checked> Formal
+        </label>
+        <label class="tone-option" id="toneFriendlyLabel">
+          <input type="radio" name="tone" value="friendly"> Friendly
+        </label>
+      </div>
+    </div>
+
     <div class="actions">
       <button class="run" id="runBtn" disabled>Generate contract &amp; invoice</button>
       <div class="status" id="status" style="display:none;">
@@ -574,6 +645,7 @@
         <button class="run" id="unlockBtn" style="padding:10px 18px; flex-shrink:0;" onclick="unlockCode()">Unlock</button>
       </div>
       <div class="hint" id="unlockHint"></div>
+      <div class="hint" style="margin-top:6px;">Lost your code? Check your email — we send a copy when you subscribe.</div>
     </div>
   </div>
 
@@ -586,6 +658,7 @@
   <div class="history" id="historySection" style="display:none;">
     <div class="section-title">Recent drafts</div>
     <div class="history-list" id="historyList"></div>
+    <div class="history-note">Saved on this device and browser only — won't follow you to another device.</div>
   </div>
 
 </main>
@@ -603,6 +676,7 @@
   const quotaDisplay = document.getElementById('quotaDisplay');
   const historySection = document.getElementById('historySection');
   const historyList = document.getElementById('historyList');
+  const expiredBanner = document.getElementById('expiredBanner');
 
   const FREE_LIMIT = 10;
   const PREMIUM_LIMIT = 50;
@@ -610,6 +684,22 @@
   const HISTORY_KEY = 'patchwork_history';
   const HISTORY_MAX = 5;
   const CODE_KEY = 'patchwork_access_code';
+  const CLIENT_ID_KEY = 'patchwork_client_id';
+
+  // Anonymous per-browser id, sent alongside IP for free-tier rate limiting.
+  // This is NOT used for tracking/analytics — only so two different free users
+  // behind the same shared IP (office wifi, mobile carrier NAT) don't share
+  // one 10/day quota. It's just a random string, nothing personal in it.
+  function getClientId() {
+    try {
+      let id = localStorage.getItem(CLIENT_ID_KEY);
+      if (!id) {
+        id = 'c_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem(CLIENT_ID_KEY, id);
+      }
+      return id;
+    } catch (e) { return null; }
+  }
 
   function getAccessCode() {
     try { return localStorage.getItem(CODE_KEY) || ''; } catch (e) { return ''; }
@@ -626,6 +716,7 @@
     if (!code) { hint.textContent = 'Enter your access code first.'; return; }
     try { localStorage.setItem(CODE_KEY, code); } catch (e) {}
     hint.textContent = 'Saved — your next draft will use the 50/day limit if the code is valid.';
+    expiredBanner.classList.remove('visible');
     renderQuota();
     checkRequired();
   }
@@ -694,6 +785,19 @@
 
   requiredIds.forEach(id => document.getElementById(id).addEventListener('input', checkRequired));
 
+  // Tone selector visual state
+  document.querySelectorAll('input[name="tone"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      document.getElementById('toneFormalLabel').classList.toggle('selected', radio.value === 'formal' && radio.checked);
+      document.getElementById('toneFriendlyLabel').classList.toggle('selected', radio.value === 'friendly' && radio.checked);
+    });
+  });
+
+  function getSelectedTone() {
+    const el = document.querySelector('input[name="tone"]:checked');
+    return el ? el.value : 'formal';
+  }
+
   function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str;
@@ -757,6 +861,7 @@
   async function generateDocs() {
     const data = {};
     allFieldIds.forEach(id => { data[id] = document.getElementById(id).value.trim(); });
+    data.tone = getSelectedTone();
 
     errorBox.classList.remove('visible');
     runBtn.disabled = true;
@@ -766,17 +871,28 @@
 
     try {
       const codeHeader = getAccessCode();
+      const clientId = getClientId();
+      const headers = { "Content-Type": "application/json" };
+      if (codeHeader) headers["x-access-code"] = codeHeader;
+      if (clientId) headers["x-client-id"] = clientId;
+
       const response = await fetch("/api/generate", {
         method: "POST",
-        headers: Object.assign(
-          { "Content-Type": "application/json" },
-          codeHeader ? { "x-access-code": codeHeader } : {}
-        ),
+        headers,
         body: JSON.stringify(data)
       });
 
       const parsed = await response.json();
       if (!response.ok) throw new Error(parsed.error || `Server returned status ${response.status}`);
+
+      // Reflect the server's view of the subscription status — this is the
+      // source of truth, not just "did we have a code saved locally".
+      if (parsed.accountStatus === 'expired') {
+        expiredBanner.classList.add('visible');
+        try { localStorage.removeItem(CODE_KEY); } catch (e) {}
+      } else if (parsed.accountStatus === 'premium') {
+        expiredBanner.classList.remove('visible');
+      }
 
       const usage = getUsage();
       usage.count += 1;
@@ -804,30 +920,75 @@
           <div class="doc-head"><span class="doc-label">Contract</span></div>
           <div class="doc-body">${escapeHtml(contractText)}</div>
           <div class="doc-actions">
-            <button onclick="copyText(this, ${JSON.stringify(contractText)})">Copy contract text</button>
+            <button data-role="copy-btn" onclick="copyText(this, ${JSON.stringify(contractText)})">Copy contract text</button>
             <button onclick="printCard('contractCard')">Save contract as PDF</button>
           </div>
+          <textarea class="copy-fallback" id="fallback-contractCard" readonly></textarea>
         </div>
         <div class="doc-card print-target" id="invoiceCard">
           <div class="stamp">DRAFT READY</div>
           <div class="doc-head"><span class="doc-label">Invoice</span></div>
           <div class="doc-body">${escapeHtml(invoiceText)}</div>
           <div class="doc-actions">
-            <button onclick="copyText(this, ${JSON.stringify(invoiceText)})">Copy invoice text</button>
+            <button data-role="copy-btn" onclick="copyText(this, ${JSON.stringify(invoiceText)})">Copy invoice text</button>
             <button onclick="printCard('invoiceCard')">Save invoice as PDF</button>
           </div>
+          <textarea class="copy-fallback" id="fallback-invoiceCard" readonly></textarea>
         </div>
       </div>
       <button class="reset-link" onclick="resetForm()">Start a new draft</button>
     `;
   }
 
+  // Copies to clipboard where supported; falls back to a visible, selectable
+  // textarea on older/locked-down mobile browsers where navigator.clipboard
+  // silently fails or doesn't exist.
   function copyText(btn, text) {
-    navigator.clipboard.writeText(text).then(() => {
-      const original = btn.textContent;
+    const original = btn.textContent;
+    const resetLabel = () => setTimeout(() => { btn.textContent = original; }, 1500);
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copied';
+        resetLabel();
+      }).catch(() => fallbackCopy(btn, text, original, resetLabel));
+    } else {
+      fallbackCopy(btn, text, original, resetLabel);
+    }
+  }
+
+  function fallbackCopy(btn, text, original, resetLabel) {
+    const card = btn.closest('.doc-card');
+    const fallbackBox = card ? card.querySelector('.copy-fallback') : null;
+
+    // Try the legacy execCommand path first — works in more mobile webviews
+    // than the modern Clipboard API does.
+    const tempTa = document.createElement('textarea');
+    tempTa.value = text;
+    tempTa.style.position = 'fixed';
+    tempTa.style.opacity = '0';
+    document.body.appendChild(tempTa);
+    tempTa.focus();
+    tempTa.select();
+    let succeeded = false;
+    try { succeeded = document.execCommand('copy'); } catch (e) { succeeded = false; }
+    document.body.removeChild(tempTa);
+
+    if (succeeded) {
       btn.textContent = 'Copied';
-      setTimeout(() => { btn.textContent = original; }, 1500);
-    });
+      resetLabel();
+      return;
+    }
+
+    // Last resort: show a selectable textarea so the user can copy manually.
+    if (fallbackBox) {
+      fallbackBox.value = text;
+      fallbackBox.classList.add('visible');
+      fallbackBox.focus();
+      fallbackBox.select();
+    }
+    btn.textContent = 'Select text below to copy';
+    resetLabel();
   }
 
   function printCard(cardId) {
